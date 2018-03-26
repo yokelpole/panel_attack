@@ -1,0 +1,10 @@
+Tetris Attack Piece Colors:
+- Blue
+- Green
+- Purple
+- Teal
+- Yellow
+- Red
+
+Six wide
+Twelve high

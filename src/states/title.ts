@@ -1,71 +1,81 @@
-import * as Assets from '../assets';
+import * as Assets from "../assets";
+import * as _ from "lodash";
+
+const BLOCK_WIDTH = 48;
+const BLOCK_HEIGHT = 48;
+const BOARD_WIDTH = 6;
+const BOARD_HEIGHT = 12;
+
+const blockTypes = [
+  Assets.Images.ImagesBlue,
+  Assets.Images.ImagesGreen,
+  Assets.Images.ImagesPurple,
+  Assets.Images.ImagesRed,
+  Assets.Images.ImagesTeal,
+  Assets.Images.ImagesYellow
+];
 
 export default class Title extends Phaser.State {
-    private backgroundTemplateSprite: Phaser.Sprite = null;
-    private googleFontText: Phaser.Text = null;
-    private localFontText: Phaser.Text = null;
-    private pixelateShader: Phaser.Filter = null;
-    private bitmapFontText: Phaser.BitmapText = null;
-    private blurXFilter: Phaser.Filter.BlurX = null;
-    private blurYFilter: Phaser.Filter.BlurY = null;
-    private sfxAudiosprite: Phaser.AudioSprite = null;
-    private mummySpritesheet: Phaser.Sprite = null;
-    private sfxLaserSounds: Assets.Audiosprites.AudiospritesSfx.Sprites[] = null;
+  private backgroundTemplateSprite: Phaser.Sprite = null;
+  private blockGroup: Phaser.Group = null;
+  private blockMap: string[][] = null;
 
-    public create(): void {
-        this.backgroundTemplateSprite = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, Assets.Images.ImagesBackgroundTemplate.getName());
-        this.backgroundTemplateSprite.anchor.setTo(0.5);
+  public create(): void {
+    this.backgroundTemplateSprite = this.game.add.sprite(
+      this.game.world.centerX,
+      this.game.world.centerY,
+      Assets.Images.ImagesBackgroundTemplate.getName()
+    );
+    this.backgroundTemplateSprite.anchor.setTo(0.5);
 
-        this.googleFontText = this.game.add.text(this.game.world.centerX, this.game.world.centerY - 100, 'Google Web Fonts', {
-            font: '50px ' + Assets.GoogleWebFonts.Barrio
-        });
-        this.googleFontText.anchor.setTo(0.5);
+    this.blockGroup = this.game.add.group();
+    this.blockMap = [];
 
-        this.localFontText = this.game.add.text(this.game.world.centerX, this.game.world.centerY, 'Local Fonts + Shaders .frag (Pixelate here)!', {
-            font: '30px ' + Assets.CustomWebFonts.Fonts2DumbWebfont.getFamily()
-        });
-        this.localFontText.anchor.setTo(0.5);
-
-        this.pixelateShader = new Phaser.Filter(this.game, null, this.game.cache.getShader(Assets.Shaders.ShadersPixelate.getName()));
-        this.localFontText.filters = [this.pixelateShader];
-
-        this.bitmapFontText = this.game.add.bitmapText(this.game.world.centerX, this.game.world.centerY + 100, Assets.BitmapFonts.FontsFontFnt.getName(), 'Bitmap Fonts + Filters .js (Blur here)!', 40);
-        this.bitmapFontText.anchor.setTo(0.5);
-
-        this.blurXFilter = this.game.add.filter(Assets.Scripts.ScriptsBlurX.getName()) as Phaser.Filter.BlurX;
-        this.blurXFilter.blur = 8;
-        this.blurYFilter = this.game.add.filter(Assets.Scripts.ScriptsBlurY.getName()) as Phaser.Filter.BlurY;
-        this.blurYFilter.blur = 2;
-
-        this.bitmapFontText.filters = [this.blurXFilter, this.blurYFilter];
-
-        this.mummySpritesheet = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY + 175, Assets.Spritesheets.SpritesheetsMetalslugMummy374518.getName());
-        this.mummySpritesheet.animations.add('walk');
-        this.mummySpritesheet.animations.play('walk', 30, true);
-
-        this.sfxAudiosprite = this.game.add.audioSprite(Assets.Audiosprites.AudiospritesSfx.getName());
-
-        // This is an example of how you can lessen the verbosity
-        let availableSFX = Assets.Audiosprites.AudiospritesSfx.Sprites;
-        this.sfxLaserSounds = [
-            availableSFX.Laser1,
-            availableSFX.Laser2,
-            availableSFX.Laser3,
-            availableSFX.Laser4,
-            availableSFX.Laser5,
-            availableSFX.Laser6,
-            availableSFX.Laser7,
-            availableSFX.Laser8,
-            availableSFX.Laser9
-        ];
-
-        this.game.sound.play(Assets.Audio.AudioMusic.getName(), 0.2, true);
-
-        this.backgroundTemplateSprite.inputEnabled = true;
-        this.backgroundTemplateSprite.events.onInputDown.add(() => {
-            this.sfxAudiosprite.play(Phaser.ArrayUtils.getRandomItem(this.sfxLaserSounds));
-        });
-
-        this.game.camera.flash(0x000000, 1000);
+    for (let x = 0; x < 12; x++) {
+      this.blockMap[x] = [];
     }
+
+    for (let x = 0; x < 6; x++) {
+      for (let y = 0; y < 6; y++) {
+        const blockType = this.getSafeBlockType(x, y);
+
+        this.blockGroup.create(
+          this.game.world.width / 2 - BLOCK_WIDTH * 3 + x * BLOCK_WIDTH,
+          this.game.world.height - BLOCK_HEIGHT - y * BLOCK_HEIGHT,
+          blockType
+        );
+
+        this.blockMap[x][y] = blockType;
+      }
+    }
+
+    this.backgroundTemplateSprite.inputEnabled = true;
+
+    this.game.camera.flash(0x000000, 1000);
+  }
+
+  private getSafeBlockType(x: number, y: number): string {
+    let blockType = _.sample(blockTypes).getName();
+    let valid = false;
+
+    while (!valid) {
+      let yCount = 0;
+      let xCount = 0;
+
+      for (let testY = y - 2; testY <= x + 2; testY++) {
+        if (testY === y || testY < 0 || testY > BOARD_HEIGHT) continue;
+        if (this.blockMap[x][testY] === blockType) yCount++;
+      }
+
+      for (let testX = x - 2; testX <= x + 2; testX++) {
+        if (testX === x || testX < 0 || testX > BOARD_WIDTH) continue;
+        if (this.blockMap[testX][y] === blockType) xCount++;
+      }
+
+      if (xCount < 2 && yCount < 2) valid = true;
+      else blockType = _.sample(blockTypes).getName();
+    }
+
+    return blockType;
+  }
 }

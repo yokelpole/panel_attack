@@ -6,6 +6,36 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/background_template.png'); }
     }
+    export class ImagesBlue {
+        static getName(): string { return 'blue'; }
+
+        static getPNG(): string { return require('assets/images/blue.png'); }
+    }
+    export class ImagesGreen {
+        static getName(): string { return 'green'; }
+
+        static getPNG(): string { return require('assets/images/green.png'); }
+    }
+    export class ImagesPurple {
+        static getName(): string { return 'purple'; }
+
+        static getPNG(): string { return require('assets/images/purple.png'); }
+    }
+    export class ImagesRed {
+        static getName(): string { return 'red'; }
+
+        static getPNG(): string { return require('assets/images/red.png'); }
+    }
+    export class ImagesTeal {
+        static getName(): string { return 'teal'; }
+
+        static getPNG(): string { return require('assets/images/teal.png'); }
+    }
+    export class ImagesYellow {
+        static getName(): string { return 'yellow'; }
+
+        static getPNG(): string { return require('assets/images/yellow.png'); }
+    }
 }
 
 export namespace Spritesheets {
