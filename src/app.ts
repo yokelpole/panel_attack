@@ -69,12 +69,8 @@ window.onload = () => {
     };
 
     for (let font in Assets.CustomWebFonts) {
-      webFontLoaderOptions.custom.families.push(
-        Assets.CustomWebFonts[font].getFamily()
-      );
-      webFontLoaderOptions.custom.urls.push(
-        Assets.CustomWebFonts[font].getCSS()
-      );
+      webFontLoaderOptions.custom.families.push(Assets.CustomWebFonts[font].getFamily());
+      webFontLoaderOptions.custom.urls.push(Assets.CustomWebFonts[font].getCSS());
     }
   }
 

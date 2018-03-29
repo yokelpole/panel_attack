@@ -19,7 +19,7 @@ export default class Title extends Phaser.State {
   private backgroundTemplateSprite: Phaser.Sprite = null;
   private blockGroup: Phaser.Group = null;
   private blockMap: Phaser.Sprite[][] = null;
-  private clickedBlock: any = null;
+  private clickedBlock: Phaser.Sprite = null;
 
   public create(): void {
     this.backgroundTemplateSprite = this.game.add.sprite(
@@ -46,7 +46,6 @@ export default class Title extends Phaser.State {
 
         newBlock.inputEnabled = true;
         newBlock.events.onInputDown.add(this.onBlockClick, this);
-        newBlock.blockLocation = { x, y };
 
         this.blockMap[x][y] = newBlock;
       }
@@ -57,31 +56,46 @@ export default class Title extends Phaser.State {
     this.game.camera.flash(0x000000, 1000);
   }
 
-  private onBlockClick(block) {
+  private determineBlockPosition(block: Phaser.Sprite) {
+    const bottomRow = _.last(this.blockMap[0]);
+    const xGridPos = (block.x - bottomRow.x) / BLOCK_WIDTH;
+    const yGridPos = (block.y - bottomRow.y) / BLOCK_HEIGHT;
+
+    return { x: xGridPos, y: yGridPos };
+  }
+
+  private onBlockClick(block: Phaser.Sprite) {
     if (this.clickedBlock) {
-      const blockProximity =
-        block.blockLocation.x - this.clickedBlock.blockLocation.x;
+      const firstBlockGridPosition = this.determineBlockPosition(this.clickedBlock);
+      const secondBlockGridPosition = this.determineBlockPosition(block);
+
+      const blockProximity = firstBlockGridPosition.x - secondBlockGridPosition.x;
       const withinOneBlock = blockProximity === -1 || blockProximity === 1;
-      const onSameLine =
-        block.blockLocation.y === this.clickedBlock.blockLocation.y;
+      const onSameLine = firstBlockGridPosition.y === secondBlockGridPosition.y;
+
       if (withinOneBlock && onSameLine) {
         // Swap their actual locations.
-        const swapBlockGridPosition = { x: block.blockLocation.x, y: block.blockLocation.y };
-        const swapBlockPosition = { x: block.x, y: block.y };
+        const swapBlockGridPosition = {
+          x: firstBlockGridPosition.x,
+          y: firstBlockGridPosition.y
+        };
+        const swapBlockPosition = {
+          x: this.clickedBlock.x,
+          y: this.clickedBlock.y
+        };
 
-        this.blockMap[this.clickedBlock.blockLocation.x][this.clickedBlock.blockLocation.y] = block;
-        this.blockMap[swapBlockGridPosition.x][swapBlockGridPosition.y] = this.clickedBlock;
+        this.blockMap[firstBlockGridPosition.x][firstBlockGridPosition.y] = block;
+        this.blockMap[secondBlockGridPosition.x][secondBlockGridPosition.y] = this.clickedBlock;
 
-        block.x = this.clickedBlock.x;
-        block.y = this.clickedBlock.y;
-        this.clickedBlock.x = swapBlockPosition.x;
-        this.clickedBlock.y = swapBlockPosition.y;
-
-        this.clickedBlock.scale.set(1.0);
-        return;
+        this.clickedBlock.x = block.x;
+        this.clickedBlock.y = block.y;
+        block.x = swapBlockPosition.x;
+        block.y = swapBlockPosition.y;
       }
 
       this.clickedBlock.scale.set(1.0);
+      this.clickedBlock = null;
+      return;
     }
 
     this.clickedBlock = block;
