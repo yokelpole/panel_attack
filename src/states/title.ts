@@ -19,7 +19,7 @@ export default class Title extends Phaser.State {
   private backgroundTemplateSprite: Phaser.Sprite = null;
   private blockGroup: Phaser.Group = null;
   private blockMap: Phaser.Sprite[][] = null;
-  private clickedBlock: Phaser.Sprite = null;
+  private firstBlock: Phaser.Sprite = null;
 
   public create(): void {
     this.backgroundTemplateSprite = this.game.add.sprite(
@@ -57,50 +57,118 @@ export default class Title extends Phaser.State {
   }
 
   private determineBlockPosition(block: Phaser.Sprite) {
-    const bottomRow = _.last(this.blockMap[0]);
-    const xGridPos = (block.x - bottomRow.x) / BLOCK_WIDTH;
-    const yGridPos = (block.y - bottomRow.y) / BLOCK_HEIGHT;
+    const topRow = _.first(this.blockMap[0]);
+    const xGridPos = (block.x - topRow.x) / BLOCK_WIDTH;
+    const yGridPos = Math.abs((block.y - topRow.y) / BLOCK_HEIGHT);
 
     return { x: xGridPos, y: yGridPos };
   }
 
   private onBlockClick(block: Phaser.Sprite) {
-    if (this.clickedBlock) {
-      const firstBlockGridPosition = this.determineBlockPosition(this.clickedBlock);
-      const secondBlockGridPosition = this.determineBlockPosition(block);
-
-      const blockProximity = firstBlockGridPosition.x - secondBlockGridPosition.x;
-      const withinOneBlock = blockProximity === -1 || blockProximity === 1;
-      const onSameLine = firstBlockGridPosition.y === secondBlockGridPosition.y;
-
-      if (withinOneBlock && onSameLine) {
-        // Swap their actual locations.
-        const swapBlockGridPosition = {
-          x: firstBlockGridPosition.x,
-          y: firstBlockGridPosition.y
-        };
-        const swapBlockPosition = {
-          x: this.clickedBlock.x,
-          y: this.clickedBlock.y
-        };
-
-        this.blockMap[firstBlockGridPosition.x][firstBlockGridPosition.y] = block;
-        this.blockMap[secondBlockGridPosition.x][secondBlockGridPosition.y] = this.clickedBlock;
-
-        this.clickedBlock.x = block.x;
-        this.clickedBlock.y = block.y;
-        block.x = swapBlockPosition.x;
-        block.y = swapBlockPosition.y;
-      }
-
-      this.clickedBlock.scale.set(1.0);
-      this.clickedBlock = null;
+    if (!this.firstBlock) {
+      this.firstBlock = block;
+      this.firstBlock.scale.set(0.8);
       return;
     }
 
-    this.clickedBlock = block;
+    const secondBlock = block;
 
-    this.clickedBlock.scale.set(0.8);
+    const firstBlockGridPosition = this.determineBlockPosition(this.firstBlock);
+    const secondBlockGridPosition = this.determineBlockPosition(secondBlock);
+
+    const blockProximity = firstBlockGridPosition.x - secondBlockGridPosition.x;
+    const withinOneBlock = blockProximity === -1 || blockProximity === 1;
+    const onSameLine = firstBlockGridPosition.y === secondBlockGridPosition.y;
+
+    if (withinOneBlock && onSameLine) {
+      const swapBlockGridPosition = { x: firstBlockGridPosition.x, y: firstBlockGridPosition.y };
+      const swapBlockPosition = { x: this.firstBlock.x, y: this.firstBlock.y };
+
+      // Swap blockmap locations
+      this.blockMap[secondBlockGridPosition.x][secondBlockGridPosition.y] = this.firstBlock;
+      this.blockMap[firstBlockGridPosition.x][firstBlockGridPosition.y] = secondBlock;
+
+      // Swap their actual locations.
+      this.firstBlock.x = secondBlock.x;
+      this.firstBlock.y = secondBlock.y;
+      secondBlock.x = swapBlockPosition.x;
+      secondBlock.y = swapBlockPosition.y;
+
+      const combos = this.scanBoardForCombos();
+      this.clearBoardCombos(combos);
+    }
+
+    this.firstBlock.scale.set(1.0);
+    this.firstBlock = null;
+  }
+
+  private scanBoardForCombos() {
+    const comboArray = [];
+
+    // TODO: Reduce repetition between two loops.
+
+    // Check combos on x-axis
+    for (let y = 0; y < BOARD_HEIGHT; y++) {
+      for (let x = 0; x < BOARD_WIDTH; x++) {
+        const currentBlock = this.blockMap[x][y];
+        if (!currentBlock) continue;
+
+        const checkedKey = currentBlock.key;
+        const currentCheck = [{ x, y }];
+
+        let checkedX = x + 1;
+        while (checkedX < BOARD_WIDTH) {
+          if (!this.blockMap[checkedX][y]) break;
+
+          if (this.blockMap[checkedX][y].key === checkedKey) {
+            currentCheck.push({ x: checkedX, y });
+            checkedX++;
+          } else break;
+        }
+
+        if (currentCheck.length >= 3) {
+          comboArray.push(currentCheck);
+          x += currentCheck.length;
+        }
+      }
+    }
+
+    // Check combos on y-axis
+    for (let x = 0; x < BOARD_WIDTH; x++) {
+      for (let y = 0; y < BOARD_HEIGHT; y++) {
+        const currentBlock = this.blockMap[x][y];
+        if (!currentBlock) continue;
+
+        const checkedKey = currentBlock.key;
+        const currentCheck = [{ x, y }];
+
+        let checkedY = y + 1;
+        while (checkedY < BOARD_HEIGHT) {
+          if (!this.blockMap[x][checkedY]) break;
+
+          if (this.blockMap[x][checkedY].key === checkedKey) {
+            currentCheck.push({ x, y: checkedY });
+            checkedY++;
+          } else break;
+        }
+
+        if (currentCheck.length >= 3) {
+          comboArray.push(currentCheck);
+          y += currentCheck.length;
+        }
+      }
+    }
+
+    return comboArray;
+  }
+
+  private clearBoardCombos(combos) {
+    _.each(combos, combo => {
+      _.each(combo, location => {
+        this.blockMap[location.x][location.y].destroy();
+        this.blockMap[location.x][location.y] = undefined;
+      });
+    });
   }
 
   private getSafeBlockType(x: number, y: number): string {
