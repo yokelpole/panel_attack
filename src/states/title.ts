@@ -96,6 +96,7 @@ export default class Title extends Phaser.State {
 
       const combos = this.scanBoardForCombos();
       this.clearBoardCombos(combos);
+      this.settleBlocks();
     }
 
     this.firstBlock.scale.set(1.0);
@@ -169,6 +170,21 @@ export default class Title extends Phaser.State {
         this.blockMap[location.x][location.y] = undefined;
       });
     });
+  }
+
+  private settleBlocks() {
+    // Start at 1 so the bottom row doesn't settle off grid.
+    for (let y = 1; y < BOARD_HEIGHT; y++) {
+      for (let x = 0; x < BOARD_WIDTH; x++) {
+        const block = this.blockMap[x][y];
+        if (block && !this.blockMap[x][y - 1]) {
+          // TODO: Make the block go down as far as it possibly can.
+          this.blockMap[x][y] = undefined;
+          this.blockMap[x][y - 1] = block;
+          block.y += BLOCK_HEIGHT;
+        }
+      }
+    }
   }
 
   private getSafeBlockType(x: number, y: number): string {
