@@ -81,7 +81,6 @@ export default class Title extends Phaser.State {
     const onSameLine = firstBlockGridPosition.y === secondBlockGridPosition.y;
 
     if (withinOneBlock && onSameLine) {
-      const swapBlockGridPosition = { x: firstBlockGridPosition.x, y: firstBlockGridPosition.y };
       const swapBlockPosition = { x: this.firstBlock.x, y: this.firstBlock.y };
 
       // Swap blockmap locations
@@ -177,11 +176,17 @@ export default class Title extends Phaser.State {
     for (let y = 1; y < BOARD_HEIGHT; y++) {
       for (let x = 0; x < BOARD_WIDTH; x++) {
         const block = this.blockMap[x][y];
+
         if (block && !this.blockMap[x][y - 1]) {
-          // TODO: Make the block go down as far as it possibly can.
+          let currentY = y - 1;
+
+          while (currentY > 0 && !this.blockMap[x][currentY - 1]) {
+            currentY -= 1;
+          }
+
+          this.blockMap[x][currentY] = block;
           this.blockMap[x][y] = undefined;
-          this.blockMap[x][y - 1] = block;
-          block.y += BLOCK_HEIGHT;
+          block.y += BLOCK_HEIGHT * (y - currentY);
         }
       }
     }
