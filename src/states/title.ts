@@ -20,6 +20,7 @@ export default class Title extends Phaser.State {
   private blockGroup: Phaser.Group = null;
   private blockMap: Phaser.Sprite[][] = null;
   private firstBlock: Phaser.Sprite = null;
+  private timer: Phaser.Timer = null;
 
   public create(): void {
     this.backgroundTemplateSprite = this.game.add.sprite(
@@ -53,7 +54,55 @@ export default class Title extends Phaser.State {
 
     this.backgroundTemplateSprite.inputEnabled = true;
 
+    this.timer = this.game.time.create(false);
+    this.timer.loop(4000, () => this.addRow());
+    this.timer.start();
+
     this.game.camera.flash(0x000000, 1000);
+  }
+
+  private addRow() {
+    for (let x = 0; x < BOARD_WIDTH; x++) {
+      for (let y = BOARD_HEIGHT; y > 0; y--) {
+        this.blockMap[x][y] = this.blockMap[x][y - 1];
+      }
+    }
+
+    console.log("### SHIFTED ROWS");
+    this.logBlockMap();
+
+    // Move all blocks up one step.
+    this.blockGroup.forEach(block => (block.y = block.y - BLOCK_HEIGHT), this);
+
+    for (let x = 0; x < BOARD_WIDTH; x++) {
+      const newBlock = this.blockGroup.create(
+        this.game.world.width / 2 - BLOCK_WIDTH * 3 + x * BLOCK_WIDTH,
+        this.game.world.height - BLOCK_HEIGHT,
+        _.sample(blockTypes).getName()
+      );
+
+      newBlock.inputEnabled = true;
+      newBlock.events.onInputDown.add(this.onBlockClick, this);
+
+      this.blockMap[x][0] = newBlock;
+    }
+
+    console.log("### ADDED NEW ROW");
+    this.logBlockMap();
+
+    this.clearBoardCombos();
+  }
+
+  private logBlockMap() {
+    for (let y = 0; y < BOARD_HEIGHT; y++) {
+      let rowString = "";
+
+      for (let x = 0; x < BOARD_WIDTH; x++) {
+        const block = this.blockMap[x][y];
+        rowString = block ? rowString.concat(_.first(block.key)) : " ";
+      }
+      console.log(rowString);
+    }
   }
 
   private determineBlockPosition(block: Phaser.Sprite) {
@@ -93,13 +142,17 @@ export default class Title extends Phaser.State {
       secondBlock.x = swapBlockPosition.x;
       secondBlock.y = swapBlockPosition.y;
 
-      const combos = this.scanBoardForCombos();
-      this.clearBoardCombos(combos);
-      this.settleBlocks();
+      this.clearBoardCombos();
     }
 
     this.firstBlock.scale.set(1.0);
     this.firstBlock = null;
+  }
+
+  private clearBoardCombos() {
+    const combos = this.scanBoardForCombos();
+    this.clearComboBlocks(combos);
+    this.settleBlocks();
   }
 
   private scanBoardForCombos() {
@@ -162,9 +215,11 @@ export default class Title extends Phaser.State {
     return comboArray;
   }
 
-  private clearBoardCombos(combos) {
+  private clearComboBlocks(combos) {
     _.each(combos, combo => {
       _.each(combo, location => {
+        if (!this.blockMap[location.x][location.y]) return;
+
         this.blockMap[location.x][location.y].destroy();
         this.blockMap[location.x][location.y] = undefined;
       });
