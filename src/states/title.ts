@@ -29,6 +29,7 @@ export default class Title extends Phaser.State {
       Assets.Images.ImagesBackgroundTemplate.getName()
     );
     this.backgroundTemplateSprite.anchor.setTo(0.5);
+    this.backgroundTemplateSprite.events.onInputDown.add(this.onBackgroundClick, this);
 
     this.blockGroup = this.game.add.group();
     this.blockMap = [];
@@ -68,9 +69,6 @@ export default class Title extends Phaser.State {
       }
     }
 
-    console.log("### SHIFTED ROWS");
-    this.logBlockMap();
-
     // Move all blocks up one step.
     this.blockGroup.forEach(block => (block.y = block.y - BLOCK_HEIGHT), this);
 
@@ -86,9 +84,6 @@ export default class Title extends Phaser.State {
 
       this.blockMap[x][0] = newBlock;
     }
-
-    console.log("### ADDED NEW ROW");
-    this.logBlockMap();
 
     this.clearBoardCombos();
   }
@@ -111,6 +106,34 @@ export default class Title extends Phaser.State {
     const yGridPos = Math.abs((block.y - topRow.y) / BLOCK_HEIGHT);
 
     return { x: xGridPos, y: yGridPos };
+  }
+
+  private onBackgroundClick(bgSprite: Phaser.Sprite, pointer: Phaser.Pointer) {
+    if (!this.firstBlock) return;
+
+    const blockGridPosition = this.determineBlockPosition(this.firstBlock);
+    const offsetX =
+      pointer.x < this.firstBlock.x ? blockGridPosition.x - 1 : blockGridPosition.x + 1;
+
+    if (offsetX < 0 || offsetX > BOARD_WIDTH) return;
+
+    if (this.blockMap[offsetX][blockGridPosition.y] !== undefined) {
+      this.firstBlock = null;
+      return;
+    }
+
+    this.blockMap[offsetX][blockGridPosition.y] = this.firstBlock;
+    this.blockMap[blockGridPosition.x][blockGridPosition.y] = undefined;
+
+    this.firstBlock.x =
+      pointer.x < this.firstBlock.x
+        ? this.firstBlock.x - BLOCK_WIDTH
+        : this.firstBlock.x + BLOCK_WIDTH;
+
+    this.firstBlock.scale.set(1.0);
+    this.firstBlock = null;
+    
+    this.clearBoardCombos();
   }
 
   private onBlockClick(block: Phaser.Sprite) {
