@@ -5,6 +5,7 @@ const BLOCK_WIDTH = 48;
 const BLOCK_HEIGHT = 48;
 const BOARD_WIDTH = 6;
 const BOARD_HEIGHT = 12;
+const ROW_MOVE_TIME = 4000;
 
 const blockTypes = [
   Assets.Images.ImagesBlue,
@@ -34,15 +35,17 @@ export default class Title extends Phaser.State {
     this.blockGroup = this.game.add.group();
     this.blockMap = [];
 
-    for (let x = 0; x < 12; x++) {
+    for (let x = 0; x < BOARD_HEIGHT; x++) {
       this.blockMap[x] = [];
     }
 
     for (let x = 0; x < 6; x++) {
       for (let y = 0; y < 6; y++) {
+        const yPos = this.game.world.height - BLOCK_HEIGHT - y * BLOCK_HEIGHT;
+
         const newBlock = this.blockGroup.create(
           this.game.world.width / 2 - BLOCK_WIDTH * 3 + x * BLOCK_WIDTH,
-          this.game.world.height - BLOCK_HEIGHT - y * BLOCK_HEIGHT,
+          yPos,
           this.getSafeBlockType(x, y)
         );
 
@@ -56,8 +59,12 @@ export default class Title extends Phaser.State {
     this.backgroundTemplateSprite.inputEnabled = true;
 
     this.timer = this.game.time.create(false);
-    this.timer.loop(4000, () => this.addRow());
+    this.timer.loop(ROW_MOVE_TIME, () => this.addRow());
     this.timer.start();
+
+    this.game.add
+      .tween(this.blockGroup)
+      .to({ y: this.blockGroup.y - BLOCK_HEIGHT }, ROW_MOVE_TIME, "Linear", true, 0);
 
     this.game.camera.flash(0x000000, 1000);
   }
@@ -70,12 +77,14 @@ export default class Title extends Phaser.State {
     }
 
     // Move all blocks up one step.
-    this.blockGroup.forEach(block => (block.y = block.y - BLOCK_HEIGHT), this);
+    // this.blockGroup.forEach(block => (block.y = block.y - BLOCK_HEIGHT), this);
 
     for (let x = 0; x < BOARD_WIDTH; x++) {
+      const yPos = this.game.world.height - BLOCK_HEIGHT - this.blockGroup.y;
+
       const newBlock = this.blockGroup.create(
         this.game.world.width / 2 - BLOCK_WIDTH * 3 + x * BLOCK_WIDTH,
-        this.game.world.height - BLOCK_HEIGHT,
+        yPos,
         _.sample(blockTypes).getName()
       );
 
@@ -86,9 +95,15 @@ export default class Title extends Phaser.State {
     }
 
     this.clearBoardCombos();
+
+    this.game.add
+      .tween(this.blockGroup)
+      .to({ y: this.blockGroup.y - BLOCK_HEIGHT }, ROW_MOVE_TIME, "Linear", true, 0);
   }
 
-  private logBlockMap() {
+  private logBlockMap(debugString) {
+    console.log(`### ${debugString}`);
+
     for (let y = 0; y < BOARD_HEIGHT; y++) {
       let rowString = "";
 
@@ -102,8 +117,8 @@ export default class Title extends Phaser.State {
 
   private determineBlockPosition(block: Phaser.Sprite) {
     const topRow = _.first(this.blockMap[0]);
-    const xGridPos = (block.x - topRow.x) / BLOCK_WIDTH;
-    const yGridPos = Math.abs((block.y - topRow.y) / BLOCK_HEIGHT);
+    const xGridPos = Math.round((block.x - topRow.x) / BLOCK_WIDTH);
+    const yGridPos = Math.round(Math.abs((block.y - topRow.y) / BLOCK_HEIGHT));
 
     return { x: xGridPos, y: yGridPos };
   }
@@ -132,7 +147,7 @@ export default class Title extends Phaser.State {
 
     this.firstBlock.scale.set(1.0);
     this.firstBlock = null;
-    
+
     this.clearBoardCombos();
   }
 
@@ -173,8 +188,7 @@ export default class Title extends Phaser.State {
   }
 
   private clearBoardCombos() {
-    const combos = this.scanBoardForCombos();
-    this.clearComboBlocks(combos);
+    this.clearComboBlocks(this.scanBoardForCombos());
     this.settleBlocks();
   }
 
@@ -189,14 +203,13 @@ export default class Title extends Phaser.State {
         const currentBlock = this.blockMap[x][y];
         if (!currentBlock) continue;
 
-        const checkedKey = currentBlock.key;
         const currentCheck = [{ x, y }];
 
         let checkedX = x + 1;
-        while (checkedX < BOARD_WIDTH) {
+        while (checkedX <= BOARD_WIDTH) {
           if (!this.blockMap[checkedX][y]) break;
 
-          if (this.blockMap[checkedX][y].key === checkedKey) {
+          if (this.blockMap[checkedX][y].key === currentBlock.key) {
             currentCheck.push({ x: checkedX, y });
             checkedX++;
           } else break;
@@ -215,14 +228,13 @@ export default class Title extends Phaser.State {
         const currentBlock = this.blockMap[x][y];
         if (!currentBlock) continue;
 
-        const checkedKey = currentBlock.key;
         const currentCheck = [{ x, y }];
 
         let checkedY = y + 1;
-        while (checkedY < BOARD_HEIGHT) {
+        while (checkedY <= BOARD_HEIGHT) {
           if (!this.blockMap[x][checkedY]) break;
 
-          if (this.blockMap[x][checkedY].key === checkedKey) {
+          if (this.blockMap[x][checkedY].key === currentBlock.key) {
             currentCheck.push({ x, y: checkedY });
             checkedY++;
           } else break;
@@ -250,12 +262,15 @@ export default class Title extends Phaser.State {
   }
 
   private settleBlocks() {
+    let blocksSettled = false;
+
     // Start at 1 so the bottom row doesn't settle off grid.
     for (let y = 1; y < BOARD_HEIGHT; y++) {
       for (let x = 0; x < BOARD_WIDTH; x++) {
         const block = this.blockMap[x][y];
 
         if (block && !this.blockMap[x][y - 1]) {
+          blocksSettled = true;
           let currentY = y - 1;
 
           while (currentY > 0 && !this.blockMap[x][currentY - 1]) {
@@ -268,6 +283,8 @@ export default class Title extends Phaser.State {
         }
       }
     }
+
+    if (blocksSettled) this.clearBoardCombos();
   }
 
   private getSafeBlockType(x: number, y: number): string {
