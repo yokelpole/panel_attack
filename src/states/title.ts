@@ -39,7 +39,7 @@ export default class Title extends Phaser.State {
       this.blockMap[x] = [];
     }
 
-    for (let x = 0; x < 6; x++) {
+    for (let x = 0; x < BOARD_WIDTH; x++) {
       for (let y = 0; y < 6; y++) {
         const yPos = this.game.world.height - BLOCK_HEIGHT - y * BLOCK_HEIGHT;
 
@@ -62,11 +62,15 @@ export default class Title extends Phaser.State {
     this.timer.loop(ROW_MOVE_TIME, () => this.addRow());
     this.timer.start();
 
+    this.tweenUpwardsOneRow();
+
+    this.game.camera.flash(0x000000, 1000);
+  }
+
+  private tweenUpwardsOneRow() {
     this.game.add
       .tween(this.blockGroup)
       .to({ y: this.blockGroup.y - BLOCK_HEIGHT }, ROW_MOVE_TIME, "Linear", true, 0);
-
-    this.game.camera.flash(0x000000, 1000);
   }
 
   private addRow() {
@@ -76,16 +80,13 @@ export default class Title extends Phaser.State {
       }
     }
 
-    // Move all blocks up one step.
-    // this.blockGroup.forEach(block => (block.y = block.y - BLOCK_HEIGHT), this);
-
     for (let x = 0; x < BOARD_WIDTH; x++) {
       const yPos = this.game.world.height - BLOCK_HEIGHT - this.blockGroup.y;
 
       const newBlock = this.blockGroup.create(
         this.game.world.width / 2 - BLOCK_WIDTH * 3 + x * BLOCK_WIDTH,
         yPos,
-        _.sample(blockTypes).getName()
+        this.getSafeBlockType(x, 0)
       );
 
       newBlock.inputEnabled = true;
@@ -95,10 +96,7 @@ export default class Title extends Phaser.State {
     }
 
     this.clearBoardCombos();
-
-    this.game.add
-      .tween(this.blockGroup)
-      .to({ y: this.blockGroup.y - BLOCK_HEIGHT }, ROW_MOVE_TIME, "Linear", true, 0);
+    this.tweenUpwardsOneRow();
   }
 
   private logBlockMap(debugString) {
@@ -140,15 +138,16 @@ export default class Title extends Phaser.State {
     this.blockMap[offsetX][blockGridPosition.y] = this.firstBlock;
     this.blockMap[blockGridPosition.x][blockGridPosition.y] = undefined;
 
-    this.firstBlock.x =
+    const xPos =
       pointer.x < this.firstBlock.x
         ? this.firstBlock.x - BLOCK_WIDTH
         : this.firstBlock.x + BLOCK_WIDTH;
 
+    const blockTween = this.game.add.tween(this.firstBlock);
+    blockTween.to({ x: xPos }, 200, "Linear", true, 0).onComplete.add(this.clearBoardCombos, this);
+
     this.firstBlock.scale.set(1.0);
     this.firstBlock = null;
-
-    this.clearBoardCombos();
   }
 
   private onBlockClick(block: Phaser.Sprite) {
@@ -174,11 +173,9 @@ export default class Title extends Phaser.State {
       this.blockMap[secondBlockGridPosition.x][secondBlockGridPosition.y] = this.firstBlock;
       this.blockMap[firstBlockGridPosition.x][firstBlockGridPosition.y] = secondBlock;
 
-      // Swap their actual locations.
-      this.firstBlock.x = secondBlock.x;
-      this.firstBlock.y = secondBlock.y;
-      secondBlock.x = swapBlockPosition.x;
-      secondBlock.y = swapBlockPosition.y;
+      // Tween their locations.
+      this.game.add.tween(this.firstBlock).to({ x: secondBlock.x }, 200, "Linear", true, 0);
+      this.game.add.tween(secondBlock).to({ x: swapBlockPosition.x }, 200, "Linear", true, 0);
 
       this.clearBoardCombos();
     }
@@ -279,7 +276,7 @@ export default class Title extends Phaser.State {
 
           this.blockMap[x][currentY] = block;
           this.blockMap[x][y] = undefined;
-          block.y += BLOCK_HEIGHT * (y - currentY);
+          this.game.add.tween(block).to({ y: block.y + BLOCK_HEIGHT * (y - currentY) }, 200, "Linear", true, 0);
         }
       }
     }
