@@ -7,6 +7,11 @@ const BOARD_WIDTH = 6;
 const BOARD_HEIGHT = 12;
 const ROW_MOVE_TIME = 4000;
 
+enum axis {
+  x,
+  y
+}
+
 const blockTypes = [
   Assets.Images.ImagesBlue,
   Assets.Images.ImagesGreen,
@@ -189,58 +194,61 @@ export default class Title extends Phaser.State {
     this.settleBlocks();
   }
 
+  private checkBlockForCombos(x: number, y: number, axisChecked: axis): Array<Object> {
+    const currentBlock = this.blockMap[x][y];
+    if (!currentBlock) return;
+
+    const combo = [];
+    const comboCoordinates = [{ x, y }];
+
+    let checkedLocation = axisChecked === axis.x ? x + 1 : y + 1;
+    const withinBounds =
+      axisChecked === axis.x
+        ? checkedLocation => checkedLocation <= BOARD_WIDTH
+        : checkedLocation => checkedLocation <= BOARD_HEIGHT;
+    const getBlock =
+      axisChecked === axis.x
+        ? checkedLocation => this.blockMap[checkedLocation][y]
+        : checkedLocation => this.blockMap[x][checkedLocation];
+    const getCoordinates =
+      axisChecked === axis.x
+        ? checkedLocation => {
+            return { x: checkedLocation, y };
+          }
+        : checkedLocation => {
+            return { x, y: checkedLocation };
+          };
+
+    while (withinBounds(checkedLocation)) {
+      const nextBlock = getBlock(checkedLocation);
+      if (!nextBlock) break;
+
+      if (nextBlock.key === currentBlock.key) {
+        comboCoordinates.push(getCoordinates(checkedLocation));
+        checkedLocation++;
+      } else break;
+    }
+
+    if (comboCoordinates.length >= 3) return comboCoordinates;
+    else return undefined;
+  }
+
   private scanBoardForCombos() {
     const comboArray = [];
-
-    // TODO: Reduce repetition between two loops.
 
     // Check combos on x-axis
     for (let y = 0; y < BOARD_HEIGHT; y++) {
       for (let x = 0; x < BOARD_WIDTH; x++) {
-        const currentBlock = this.blockMap[x][y];
-        if (!currentBlock) continue;
-
-        const currentCheck = [{ x, y }];
-
-        let checkedX = x + 1;
-        while (checkedX <= BOARD_WIDTH) {
-          if (!this.blockMap[checkedX][y]) break;
-
-          if (this.blockMap[checkedX][y].key === currentBlock.key) {
-            currentCheck.push({ x: checkedX, y });
-            checkedX++;
-          } else break;
-        }
-
-        if (currentCheck.length >= 3) {
-          comboArray.push(currentCheck);
-          x += currentCheck.length;
-        }
+        const comboCooridnates = this.checkBlockForCombos(x, y, axis.x);
+        if (comboCooridnates) comboArray.push(comboCooridnates);
       }
     }
 
     // Check combos on y-axis
     for (let x = 0; x < BOARD_WIDTH; x++) {
       for (let y = 0; y < BOARD_HEIGHT; y++) {
-        const currentBlock = this.blockMap[x][y];
-        if (!currentBlock) continue;
-
-        const currentCheck = [{ x, y }];
-
-        let checkedY = y + 1;
-        while (checkedY <= BOARD_HEIGHT) {
-          if (!this.blockMap[x][checkedY]) break;
-
-          if (this.blockMap[x][checkedY].key === currentBlock.key) {
-            currentCheck.push({ x, y: checkedY });
-            checkedY++;
-          } else break;
-        }
-
-        if (currentCheck.length >= 3) {
-          comboArray.push(currentCheck);
-          y += currentCheck.length;
-        }
+        const comboCoordinates = this.checkBlockForCombos(x, y, axis.y);
+        if (comboCoordinates) comboArray.push(comboCoordinates);
       }
     }
 
@@ -276,7 +284,9 @@ export default class Title extends Phaser.State {
 
           this.blockMap[x][currentY] = block;
           this.blockMap[x][y] = undefined;
-          this.game.add.tween(block).to({ y: block.y + BLOCK_HEIGHT * (y - currentY) }, 200, "Linear", true, 0);
+          this.game.add
+            .tween(block)
+            .to({ y: block.y + BLOCK_HEIGHT * (y - currentY) }, 200, "Linear", true, 0);
         }
       }
     }
