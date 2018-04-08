@@ -102,6 +102,7 @@ export default class Title extends Phaser.State {
 
     this.clearBoardCombos();
     this.tweenUpwardsOneRow();
+    this.logBlockMap("Added new row");
   }
 
   private logBlockMap(debugString) {
@@ -112,7 +113,7 @@ export default class Title extends Phaser.State {
 
       for (let x = 0; x < BOARD_WIDTH; x++) {
         const block = this.blockMap[x][y];
-        rowString = block ? rowString.concat(_.first(block.key)) : " ";
+        rowString = rowString.concat(_.first(_.get(block, "key")) || " ");
       }
       console.log(rowString);
     }
@@ -252,17 +253,13 @@ export default class Title extends Phaser.State {
       }
     }
 
-    return comboArray;
+    return _.uniqWith(_.flatten(comboArray), _.isEqual);
   }
 
-  private clearComboBlocks(combos) {
-    _.each(combos, combo => {
-      _.each(combo, location => {
-        if (!this.blockMap[location.x][location.y]) return;
-
-        this.blockMap[location.x][location.y].destroy();
-        this.blockMap[location.x][location.y] = undefined;
-      });
+  private clearComboBlocks(locations) {
+    _.each(locations, location => {
+      this.blockMap[location.x][location.y].destroy();
+      this.blockMap[location.x][location.y] = undefined;
     });
   }
 
@@ -284,14 +281,14 @@ export default class Title extends Phaser.State {
 
           this.blockMap[x][currentY] = block;
           this.blockMap[x][y] = undefined;
+
           this.game.add
             .tween(block)
-            .to({ y: block.y + BLOCK_HEIGHT * (y - currentY) }, 200, "Linear", true, 0);
+            .to({ y: block.y + BLOCK_HEIGHT * (y - currentY) }, 200, "Linear", true)
+            .onComplete.add(this.clearBoardCombos, this);
         }
       }
     }
-
-    if (blocksSettled) this.clearBoardCombos();
   }
 
   private getSafeBlockType(x: number, y: number): string {
