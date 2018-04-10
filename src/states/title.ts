@@ -6,6 +6,7 @@ const BLOCK_HEIGHT = 48;
 const BOARD_WIDTH = 6;
 const BOARD_HEIGHT = 12;
 const ROW_MOVE_TIME = 4000;
+const BLOCK_MOVE_TIME = 200;
 
 enum axis {
   x,
@@ -26,9 +27,14 @@ export default class Title extends Phaser.State {
   private blockGroup: Phaser.Group = null;
   private blockMap: Phaser.Sprite[][] = null;
   private firstBlock: Phaser.Sprite = null;
-  private timer: Phaser.Timer = null;
+  private addRowTimer: Phaser.Timer = null;
+  private upwardsTween: Phaser.Tween = null;
+  private haltTimer: Phaser.Timer = null;
+  private activeSettleTweenCount: number = 0;
 
   public create(): void {
+    this.game.physics.startSystem(Phaser.Physics.ARCADE);
+
     this.backgroundTemplateSprite = this.game.add.sprite(
       this.game.world.centerX,
       this.game.world.centerY,
@@ -63,9 +69,9 @@ export default class Title extends Phaser.State {
 
     this.backgroundTemplateSprite.inputEnabled = true;
 
-    this.timer = this.game.time.create(false);
-    this.timer.loop(ROW_MOVE_TIME, () => this.addRow());
-    this.timer.start();
+    this.addRowTimer = this.game.time.create(false);
+    this.addRowTimer.loop(ROW_MOVE_TIME, () => this.addRow());
+    this.addRowTimer.start();
 
     this.tweenUpwardsOneRow();
 
@@ -73,7 +79,7 @@ export default class Title extends Phaser.State {
   }
 
   private tweenUpwardsOneRow() {
-    this.game.add
+    this.upwardsTween = this.game.add
       .tween(this.blockGroup)
       .to({ y: this.blockGroup.y - BLOCK_HEIGHT }, ROW_MOVE_TIME, "Linear", true, 0);
   }
@@ -96,13 +102,10 @@ export default class Title extends Phaser.State {
 
       newBlock.inputEnabled = true;
       newBlock.events.onInputDown.add(this.onBlockClick, this);
-
       this.blockMap[x][0] = newBlock;
     }
 
-    this.clearBoardCombos();
     this.tweenUpwardsOneRow();
-    this.logBlockMap("Added new row");
   }
 
   private logBlockMap(debugString) {
@@ -134,7 +137,7 @@ export default class Title extends Phaser.State {
     const offsetX =
       pointer.x < this.firstBlock.x ? blockGridPosition.x - 1 : blockGridPosition.x + 1;
 
-    if (offsetX < 0 || offsetX > BOARD_WIDTH) return;
+    if (offsetX < 0 || offsetX >= BOARD_WIDTH) return;
 
     if (this.blockMap[offsetX][blockGridPosition.y] !== undefined) {
       this.firstBlock = null;
@@ -149,8 +152,10 @@ export default class Title extends Phaser.State {
         ? this.firstBlock.x - BLOCK_WIDTH
         : this.firstBlock.x + BLOCK_WIDTH;
 
-    const blockTween = this.game.add.tween(this.firstBlock);
-    blockTween.to({ x: xPos }, 200, "Linear", true, 0).onComplete.add(this.clearBoardCombos, this);
+    this.game.add
+      .tween(this.firstBlock)
+      .to({ x: xPos }, BLOCK_MOVE_TIME, "Linear", true, 0)
+      .onComplete.add(this.clearBoardCombos, this);
 
     this.firstBlock.scale.set(1.0);
     this.firstBlock = null;
@@ -180,8 +185,12 @@ export default class Title extends Phaser.State {
       this.blockMap[firstBlockGridPosition.x][firstBlockGridPosition.y] = secondBlock;
 
       // Tween their locations.
-      this.game.add.tween(this.firstBlock).to({ x: secondBlock.x }, 200, "Linear", true, 0);
-      this.game.add.tween(secondBlock).to({ x: swapBlockPosition.x }, 200, "Linear", true, 0);
+      this.game.add
+        .tween(this.firstBlock)
+        .to({ x: secondBlock.x }, BLOCK_MOVE_TIME, "Linear", true);
+      this.game.add
+        .tween(secondBlock)
+        .to({ x: swapBlockPosition.x }, BLOCK_MOVE_TIME, "Linear", true);
 
       this.clearBoardCombos();
     }
@@ -191,7 +200,27 @@ export default class Title extends Phaser.State {
   }
 
   private clearBoardCombos() {
-    this.clearComboBlocks(this.scanBoardForCombos());
+    const combos = this.scanBoardForCombos();
+
+    if (!_.isEmpty(combos)) {
+      this.upwardsTween.pause();
+      this.addRowTimer.pause();
+
+      this.clearComboBlocks(combos);
+
+      // Prevent older timers from resuming the action.
+      if (this.haltTimer) {
+        this.haltTimer.stop();
+        this.haltTimer = undefined;
+      }
+
+      this.haltTimer = this.game.time.create();
+      this.haltTimer.add(BLOCK_MOVE_TIME * 2, () => {
+        this.upwardsTween.resume();
+        this.addRowTimer.resume();
+      });
+      this.haltTimer.start();
+    }
     this.settleBlocks();
   }
 
@@ -264,15 +293,12 @@ export default class Title extends Phaser.State {
   }
 
   private settleBlocks() {
-    let blocksSettled = false;
-
     // Start at 1 so the bottom row doesn't settle off grid.
     for (let y = 1; y < BOARD_HEIGHT; y++) {
       for (let x = 0; x < BOARD_WIDTH; x++) {
         const block = this.blockMap[x][y];
 
         if (block && !this.blockMap[x][y - 1]) {
-          blocksSettled = true;
           let currentY = y - 1;
 
           while (currentY > 0 && !this.blockMap[x][currentY - 1]) {
@@ -284,8 +310,18 @@ export default class Title extends Phaser.State {
 
           this.game.add
             .tween(block)
-            .to({ y: block.y + BLOCK_HEIGHT * (y - currentY) }, 200, "Linear", true)
-            .onComplete.add(this.clearBoardCombos, this);
+            .to({ y: block.y + BLOCK_HEIGHT * (y - currentY) }, BLOCK_MOVE_TIME, "Linear", true)
+            .onComplete.add(tween => {
+              this.activeSettleTweenCount -= 1;
+              if (!this.activeSettleTweenCount) {
+                // Can only check board combos once everything is settled or else
+                // tweening location of objects gets thrown off.
+                this.clearBoardCombos();
+
+                // TODO: Maybe a function to settle slighly errant blocks?
+              }
+            }, this);
+          this.activeSettleTweenCount += 1;
         }
       }
     }
