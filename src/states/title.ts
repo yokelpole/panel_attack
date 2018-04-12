@@ -25,7 +25,7 @@ const blockTypes = [
 export default class Title extends Phaser.State {
   private backgroundTemplateSprite: Phaser.Sprite = null;
   private blockGroup: Phaser.Group = null;
-  private blockMap: Phaser.Sprite[][] = null;
+  private blockMap: Phaser.Sprite[][] = [];
   private firstBlock: Phaser.Sprite = null;
   private addRowTimer: Phaser.Timer = null;
   private upwardsTween: Phaser.Tween = null;
@@ -42,9 +42,7 @@ export default class Title extends Phaser.State {
     );
     this.backgroundTemplateSprite.anchor.setTo(0.5);
     this.backgroundTemplateSprite.events.onInputDown.add(this.onBackgroundClick, this);
-
     this.blockGroup = this.game.add.group();
-    this.blockMap = [];
 
     for (let x = 0; x < BOARD_HEIGHT; x++) {
       this.blockMap[x] = [];
@@ -52,18 +50,7 @@ export default class Title extends Phaser.State {
 
     for (let x = 0; x < BOARD_WIDTH; x++) {
       for (let y = 0; y < 6; y++) {
-        const yPos = this.game.world.height - BLOCK_HEIGHT - y * BLOCK_HEIGHT;
-
-        const newBlock = this.blockGroup.create(
-          this.game.world.width / 2 - BLOCK_WIDTH * 3 + x * BLOCK_WIDTH,
-          yPos,
-          this.getSafeBlockType(x, y)
-        );
-
-        newBlock.inputEnabled = true;
-        newBlock.events.onInputDown.add(this.onBlockClick, this);
-
-        this.blockMap[x][y] = newBlock;
+        this.blockMap[x][y] = this.createNewBlock(x, y);
       }
     }
 
@@ -73,18 +60,37 @@ export default class Title extends Phaser.State {
     this.addRowTimer.loop(ROW_MOVE_TIME, () => this.addRow());
     this.addRowTimer.start();
 
-    this.tweenUpwardsOneRow();
+    this.upwardsTween = this.tweenUpwardsOneRow();
+
+    this.logBlockMap("NEW GAME");
 
     this.game.camera.flash(0x000000, 1000);
   }
 
-  private tweenUpwardsOneRow() {
-    this.upwardsTween = this.game.add
+  private tweenUpwardsOneRow(): Phaser.Tween {
+    return this.game.add
       .tween(this.blockGroup)
       .to({ y: this.blockGroup.y - BLOCK_HEIGHT }, ROW_MOVE_TIME, "Linear", true, 0);
   }
 
-  private addRow() {
+  private createNewBlock(x: number, y: number): Phaser.Sprite {
+    const yPos = y !== 0
+      ? this.game.world.height - BLOCK_HEIGHT - y * BLOCK_HEIGHT
+      : this.game.world.height - BLOCK_HEIGHT - this.blockGroup.y;
+
+    const newBlock = this.blockGroup.create(
+      this.game.world.width / 2 - BLOCK_WIDTH * 3 + x * BLOCK_WIDTH,
+      yPos,
+      this.getSafeBlockType(x, y)
+    );
+
+    newBlock.inputEnabled = true;
+    newBlock.events.onInputDown.add(this.onBlockClick, this);
+
+    return newBlock;
+  }
+
+  private addRow(): void {
     for (let x = 0; x < BOARD_WIDTH; x++) {
       for (let y = BOARD_HEIGHT; y > 0; y--) {
         this.blockMap[x][y] = this.blockMap[x][y - 1];
@@ -92,20 +98,10 @@ export default class Title extends Phaser.State {
     }
 
     for (let x = 0; x < BOARD_WIDTH; x++) {
-      const yPos = this.game.world.height - BLOCK_HEIGHT - this.blockGroup.y;
-
-      const newBlock = this.blockGroup.create(
-        this.game.world.width / 2 - BLOCK_WIDTH * 3 + x * BLOCK_WIDTH,
-        yPos,
-        this.getSafeBlockType(x, 0)
-      );
-
-      newBlock.inputEnabled = true;
-      newBlock.events.onInputDown.add(this.onBlockClick, this);
-      this.blockMap[x][0] = newBlock;
+      this.blockMap[x][0] = this.createNewBlock(x, 0);
     }
 
-    this.tweenUpwardsOneRow();
+    this.upwardsTween = this.tweenUpwardsOneRow();
   }
 
   private logBlockMap(debugString) {
@@ -161,7 +157,7 @@ export default class Title extends Phaser.State {
     this.firstBlock = null;
   }
 
-  private onBlockClick(block: Phaser.Sprite) {
+  private onBlockClick(block: Phaser.Sprite): void {
     if (!this.firstBlock) {
       this.firstBlock = block;
       this.firstBlock.scale.set(0.8);
@@ -199,7 +195,7 @@ export default class Title extends Phaser.State {
     this.firstBlock = null;
   }
 
-  private clearBoardCombos() {
+  private clearBoardCombos(): void {
     const combos = this.scanBoardForCombos();
 
     if (!_.isEmpty(combos)) {
@@ -242,12 +238,8 @@ export default class Title extends Phaser.State {
         : checkedLocation => this.blockMap[x][checkedLocation];
     const getCoordinates =
       axisChecked === axis.x
-        ? checkedLocation => {
-            return { x: checkedLocation, y };
-          }
-        : checkedLocation => {
-            return { x, y: checkedLocation };
-          };
+        ? (checkedLocation) => ({ x: checkedLocation, y })
+        : (checkedLocation) => ({ x, y: checkedLocation });
 
     while (withinBounds(checkedLocation)) {
       const nextBlock = getBlock(checkedLocation);
@@ -263,7 +255,7 @@ export default class Title extends Phaser.State {
     else return undefined;
   }
 
-  private scanBoardForCombos() {
+  private scanBoardForCombos(): Array<[number, number]> {
     const comboArray = [];
 
     // Check combos on x-axis
@@ -285,14 +277,14 @@ export default class Title extends Phaser.State {
     return _.uniqWith(_.flatten(comboArray), _.isEqual);
   }
 
-  private clearComboBlocks(locations) {
+  private clearComboBlocks(locations): void {
     _.each(locations, location => {
       this.blockMap[location.x][location.y].destroy();
       this.blockMap[location.x][location.y] = undefined;
     });
   }
 
-  private settleBlocks() {
+  private settleBlocks(): void {
     // Start at 1 so the bottom row doesn't settle off grid.
     for (let y = 1; y < BOARD_HEIGHT; y++) {
       for (let x = 0; x < BOARD_WIDTH; x++) {
