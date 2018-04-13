@@ -31,6 +31,7 @@ export default class Title extends Phaser.State {
   private upwardsTween: Phaser.Tween = null;
   private haltTimer: Phaser.Timer = null;
   private activeSettleTweenCount: number = 0;
+  private swipeStartX: number = null;
 
   public create(): void {
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -41,7 +42,6 @@ export default class Title extends Phaser.State {
       Assets.Images.ImagesBackgroundTemplate.getName()
     );
     this.backgroundTemplateSprite.anchor.setTo(0.5);
-    this.backgroundTemplateSprite.events.onInputDown.add(this.onBackgroundClick, this);
     this.blockGroup = this.game.add.group();
 
     for (let x = 0; x < BOARD_HEIGHT; x++) {
@@ -62,8 +62,6 @@ export default class Title extends Phaser.State {
 
     this.upwardsTween = this.tweenUpwardsOneRow();
 
-    this.logBlockMap("NEW GAME");
-
     this.game.camera.flash(0x000000, 1000);
   }
 
@@ -78,16 +76,78 @@ export default class Title extends Phaser.State {
       ? this.game.world.height - BLOCK_HEIGHT - y * BLOCK_HEIGHT
       : this.game.world.height - BLOCK_HEIGHT - this.blockGroup.y;
 
-    const newBlock = this.blockGroup.create(
+    const newBlock: Phaser.Sprite = this.blockGroup.create(
       this.game.world.width / 2 - BLOCK_WIDTH * 3 + x * BLOCK_WIDTH,
       yPos,
       this.getSafeBlockType(x, y)
     );
 
     newBlock.inputEnabled = true;
-    newBlock.events.onInputDown.add(this.onBlockClick, this);
+    newBlock.events.onInputDown.add(this.startSwipeTracking, this);
+    newBlock.events.onInputUp.add(this.endSwipeTracking, this);
 
     return newBlock;
+  }
+
+  private startSwipeTracking(block: Phaser.Sprite, pointer: Phaser.Pointer) {
+    this.swipeStartX = pointer.x;
+    this.firstBlock = block;
+    this.firstBlock.scale.set(0.8);
+  }
+
+  private endSwipeTracking(block: Phaser.Sprite, pointer: Phaser.Pointer) {
+    if (this.swipeStartX) {
+      const distanceX = Math.abs(pointer.x - this.swipeStartX);
+
+      if (distanceX > 25) {
+        const blockPosition = this.determineBlockPosition(this.firstBlock);
+        const swipeDirection = pointer.x - this.swipeStartX > 0 ? 1 : -1;
+        const switchX = blockPosition.x + swipeDirection;
+        const secondBlock = this.blockMap[switchX][blockPosition.y];
+
+        if (switchX < 0 || switchX >= BOARD_WIDTH) return;
+
+        this.blockMap[switchX][blockPosition.y] = this.firstBlock;
+
+        if (secondBlock) this.swapBlocks(blockPosition, this.firstBlock, secondBlock);
+        else this.moveSingleBlock(blockPosition, this.firstBlock, pointer);
+       }
+    }
+
+    this.firstBlock.scale.set(1.0);
+    this.swipeStartX = null;
+    this.firstBlock = null;
+  }
+
+  private swapBlocks(blockPosition, firstBlock: Phaser.Sprite, secondBlock: Phaser.Sprite) {
+    const swapBlockPosition = { x: firstBlock.x, y: firstBlock.y };
+
+    // First block has already been moved since it gets moved in every move, not just swaps. 
+    this.blockMap[blockPosition.x][blockPosition.y] = secondBlock;
+
+    // Tween their locations.
+    this.game.add
+      .tween(firstBlock)
+      .to({ x: secondBlock.x }, BLOCK_MOVE_TIME, "Linear", true);
+    this.game.add
+      .tween(secondBlock)
+      .to({ x: swapBlockPosition.x }, BLOCK_MOVE_TIME, "Linear", true);
+
+    this.clearBoardCombos();
+  }
+
+  private moveSingleBlock(blockPosition, block: Phaser.Sprite, pointer: Phaser.Pointer) {
+    this.blockMap[blockPosition.x][blockPosition.y] = undefined;
+
+    const xPos =
+      pointer.x < this.firstBlock.x
+        ? this.firstBlock.x - BLOCK_WIDTH
+        : this.firstBlock.x + BLOCK_WIDTH;
+
+    this.game.add
+      .tween(this.firstBlock)
+      .to({ x: xPos }, BLOCK_MOVE_TIME, "Linear", true, 0)
+      .onComplete.add(this.clearBoardCombos, this);
   }
 
   private addRow(): void {
@@ -124,75 +184,6 @@ export default class Title extends Phaser.State {
     const yGridPos = Math.round(Math.abs((block.y - topRow.y) / BLOCK_HEIGHT));
 
     return { x: xGridPos, y: yGridPos };
-  }
-
-  private onBackgroundClick(bgSprite: Phaser.Sprite, pointer: Phaser.Pointer) {
-    if (!this.firstBlock) return;
-
-    const blockGridPosition = this.determineBlockPosition(this.firstBlock);
-    const offsetX =
-      pointer.x < this.firstBlock.x ? blockGridPosition.x - 1 : blockGridPosition.x + 1;
-
-    if (offsetX < 0 || offsetX >= BOARD_WIDTH) return;
-
-    if (this.blockMap[offsetX][blockGridPosition.y] !== undefined) {
-      this.firstBlock = null;
-      return;
-    }
-
-    this.blockMap[offsetX][blockGridPosition.y] = this.firstBlock;
-    this.blockMap[blockGridPosition.x][blockGridPosition.y] = undefined;
-
-    const xPos =
-      pointer.x < this.firstBlock.x
-        ? this.firstBlock.x - BLOCK_WIDTH
-        : this.firstBlock.x + BLOCK_WIDTH;
-
-    this.game.add
-      .tween(this.firstBlock)
-      .to({ x: xPos }, BLOCK_MOVE_TIME, "Linear", true, 0)
-      .onComplete.add(this.clearBoardCombos, this);
-
-    this.firstBlock.scale.set(1.0);
-    this.firstBlock = null;
-  }
-
-  private onBlockClick(block: Phaser.Sprite): void {
-    if (!this.firstBlock) {
-      this.firstBlock = block;
-      this.firstBlock.scale.set(0.8);
-      return;
-    }
-
-    const secondBlock = block;
-
-    const firstBlockGridPosition = this.determineBlockPosition(this.firstBlock);
-    const secondBlockGridPosition = this.determineBlockPosition(secondBlock);
-
-    const blockProximity = firstBlockGridPosition.x - secondBlockGridPosition.x;
-    const withinOneBlock = blockProximity === -1 || blockProximity === 1;
-    const onSameLine = firstBlockGridPosition.y === secondBlockGridPosition.y;
-
-    if (withinOneBlock && onSameLine) {
-      const swapBlockPosition = { x: this.firstBlock.x, y: this.firstBlock.y };
-
-      // Swap blockmap locations
-      this.blockMap[secondBlockGridPosition.x][secondBlockGridPosition.y] = this.firstBlock;
-      this.blockMap[firstBlockGridPosition.x][firstBlockGridPosition.y] = secondBlock;
-
-      // Tween their locations.
-      this.game.add
-        .tween(this.firstBlock)
-        .to({ x: secondBlock.x }, BLOCK_MOVE_TIME, "Linear", true);
-      this.game.add
-        .tween(secondBlock)
-        .to({ x: swapBlockPosition.x }, BLOCK_MOVE_TIME, "Linear", true);
-
-      this.clearBoardCombos();
-    }
-
-    this.firstBlock.scale.set(1.0);
-    this.firstBlock = null;
   }
 
   private clearBoardCombos(): void {
