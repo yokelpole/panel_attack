@@ -48,8 +48,10 @@ export default class Title extends Phaser.State {
       this.blockMap[x] = [];
     }
 
+
     for (let x = 0; x < BOARD_WIDTH; x++) {
-      for (let y = 0; y < 6; y++) {
+      // y starts at -1 as to fill the incoming but inactive row.
+      for (let y = -1; y < 6; y++) {
         this.blockMap[x][y] = this.createNewBlock(x, y);
       }
     }
@@ -72,9 +74,9 @@ export default class Title extends Phaser.State {
   }
 
   private createNewBlock(x: number, y: number): Phaser.Sprite {
-    const yPos = y !== 0
+    const yPos = y > 0
       ? this.game.world.height - BLOCK_HEIGHT - y * BLOCK_HEIGHT
-      : this.game.world.height - BLOCK_HEIGHT - this.blockGroup.y;
+      : this.game.world.height - BLOCK_HEIGHT - this.blockGroup.y - y * BLOCK_HEIGHT;
 
     const newBlock: Phaser.Sprite = this.blockGroup.create(
       this.game.world.width / 2 - BLOCK_WIDTH * 3 + x * BLOCK_WIDTH,
@@ -85,6 +87,8 @@ export default class Title extends Phaser.State {
     newBlock.inputEnabled = true;
     newBlock.events.onInputDown.add(this.startSwipeTracking, this);
     newBlock.events.onInputUp.add(this.endSwipeTracking, this);
+
+    if (y < 0) newBlock.alpha = 0.5;
 
     return newBlock;
   }
@@ -122,7 +126,7 @@ export default class Title extends Phaser.State {
   private swapBlocks(blockPosition, firstBlock: Phaser.Sprite, secondBlock: Phaser.Sprite) {
     const swapBlockPosition = { x: firstBlock.x, y: firstBlock.y };
 
-    // First block has already been moved since it gets moved in every move, not just swaps. 
+    // First block has already been moved since it gets moved in every move, not just swaps.
     this.blockMap[blockPosition.x][blockPosition.y] = secondBlock;
 
     // Tween their locations.
@@ -152,13 +156,14 @@ export default class Title extends Phaser.State {
 
   private addRow(): void {
     for (let x = 0; x < BOARD_WIDTH; x++) {
-      for (let y = BOARD_HEIGHT; y > 0; y--) {
+      for (let y = BOARD_HEIGHT; y >= 0; y--) {
         this.blockMap[x][y] = this.blockMap[x][y - 1];
+        if (y === 0) this.blockMap[x][y].alpha = 1.0;
       }
     }
 
     for (let x = 0; x < BOARD_WIDTH; x++) {
-      this.blockMap[x][0] = this.createNewBlock(x, 0);
+      this.blockMap[x][-1] = this.createNewBlock(x, -1);
     }
 
     this.upwardsTween = this.tweenUpwardsOneRow();
