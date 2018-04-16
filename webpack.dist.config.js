@@ -56,22 +56,22 @@ module.exports = {
                 }
             }
         }),*/
-        /*new HtmlWebpackPlugin({
+        new HtmlWebpackPlugin({
             title: 'Phaser NPM Webpack TypeScript Starter Project!',
             template: path.join(__dirname, 'templates/index.ejs')
-        })*/
+        })
     ],
     devServer: {
         contentBase: path.join(__dirname, 'dist'),
         host: "0.0.0.0",
         port: process.env.PORT || 8080,
         compress: true,
-        inline: true,
-        watchOptions: {
+        //inline: true,
+        /*watchOptions: {
             aggregateTimeout: 300,
             poll: true,
             ignored: /node_modules/
-        }
+        }*/
     },
     module: {
         rules: [
