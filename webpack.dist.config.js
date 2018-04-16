@@ -65,7 +65,6 @@ module.exports = {
         contentBase: path.join(__dirname, 'dist'),
         compress: true,
         inline: true,
-        host: "0.0.0.0",
         watchOptions: {
             aggregateTimeout: 300,
             poll: true,
