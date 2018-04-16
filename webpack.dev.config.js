@@ -57,7 +57,6 @@ module.exports = {
         contentBase: path.join(__dirname, 'dist'),
         compress: true,
         host: "127.0.0.1",
-        port: 9000,
         inline: true,
         watchOptions: {
             aggregateTimeout: 300,
