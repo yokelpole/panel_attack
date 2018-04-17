@@ -1,10 +1,10 @@
 import * as Assets from "../assets";
 import * as _ from "lodash";
 
-const BLOCK_WIDTH = 48;
+const BLOCK_WIDTH = 130;
 const BLOCK_HEIGHT = 48;
 const BOARD_WIDTH = 6;
-const BOARD_HEIGHT = 9; // Should be 12
+const BOARD_HEIGHT = 8;
 const ROW_MOVE_TIME = 4000;
 const BLOCK_MOVE_TIME = 200;
 
@@ -84,6 +84,8 @@ export default class Title extends Phaser.State {
       this.getSafeBlockType(x, y)
     );
 
+    newBlock.scale.setTo(2.70833333, 1.0);
+
     newBlock.inputEnabled = true;
     newBlock.events.onInputDown.add(this.startSwipeTracking, this);
     newBlock.events.onInputUp.add(this.endSwipeTracking, this);
@@ -118,7 +120,7 @@ export default class Title extends Phaser.State {
       }
     }
 
-    this.firstBlock.scale.set(1.0);
+    this.firstBlock.scale.set(2.7083333, 1.0);
     this.swipeStartX = null;
     this.firstBlock = null;
   }
