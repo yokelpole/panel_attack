@@ -4,7 +4,7 @@ import * as _ from "lodash";
 const BLOCK_WIDTH = 48;
 const BLOCK_HEIGHT = 48;
 const BOARD_WIDTH = 6;
-const BOARD_HEIGHT = 12;
+const BOARD_HEIGHT = 9; // Should be 12
 const ROW_MOVE_TIME = 4000;
 const BLOCK_MOVE_TIME = 200;
 
@@ -42,21 +42,20 @@ export default class Title extends Phaser.State {
       Assets.Images.ImagesBackgroundTemplate.getName()
     );
     this.backgroundTemplateSprite.anchor.setTo(0.5);
+
     this.blockGroup = this.game.add.group();
 
     for (let x = 0; x < BOARD_HEIGHT; x++) {
       this.blockMap[x] = [];
     }
 
-
     for (let x = 0; x < BOARD_WIDTH; x++) {
       // y starts at -1 as to fill the incoming but inactive row.
       for (let y = -1; y < 6; y++) {
         this.blockMap[x][y] = this.createNewBlock(x, y);
+        if (y === -1) this.blockMap[x][y].inputEnabled = false;
       }
     }
-
-    this.backgroundTemplateSprite.inputEnabled = true;
 
     this.addRowTimer = this.game.time.create(false);
     this.addRowTimer.loop(ROW_MOVE_TIME, () => this.addRow());
@@ -74,9 +73,10 @@ export default class Title extends Phaser.State {
   }
 
   private createNewBlock(x: number, y: number): Phaser.Sprite {
-    const yPos = y > 0
-      ? this.game.world.height - BLOCK_HEIGHT - y * BLOCK_HEIGHT
-      : this.game.world.height - BLOCK_HEIGHT - this.blockGroup.y - y * BLOCK_HEIGHT;
+    const yPos =
+      y > 0
+        ? this.game.world.height - BLOCK_HEIGHT - y * BLOCK_HEIGHT
+        : this.game.world.height - BLOCK_HEIGHT - this.blockGroup.y - y * BLOCK_HEIGHT;
 
     const newBlock: Phaser.Sprite = this.blockGroup.create(
       this.game.world.width / 2 - BLOCK_WIDTH * 3 + x * BLOCK_WIDTH,
@@ -115,7 +115,7 @@ export default class Title extends Phaser.State {
 
         if (secondBlock) this.swapBlocks(blockPosition, this.firstBlock, secondBlock);
         else this.moveSingleBlock(blockPosition, this.firstBlock, pointer);
-       }
+      }
     }
 
     this.firstBlock.scale.set(1.0);
@@ -130,9 +130,7 @@ export default class Title extends Phaser.State {
     this.blockMap[blockPosition.x][blockPosition.y] = secondBlock;
 
     // Tween their locations.
-    this.game.add
-      .tween(firstBlock)
-      .to({ x: secondBlock.x }, BLOCK_MOVE_TIME, "Linear", true);
+    this.game.add.tween(firstBlock).to({ x: secondBlock.x }, BLOCK_MOVE_TIME, "Linear", true);
     this.game.add
       .tween(secondBlock)
       .to({ x: swapBlockPosition.x }, BLOCK_MOVE_TIME, "Linear", true);
@@ -155,15 +153,46 @@ export default class Title extends Phaser.State {
   }
 
   private addRow(): void {
+    // End game if blocks are too high.
+    for (let x = 0; x < BOARD_WIDTH; x++) {
+      if (this.blockMap[x][BOARD_HEIGHT]) {
+        this.addRowTimer.stop();
+
+        const style = {
+          font: "bold 32px Arial",
+          fill: "#fff",
+          boundsAlignH: "center",
+          boundsAlignV: "middle"
+        };
+
+        //  The Text is positioned at 0, 100
+        const text = this.game.add.text(
+          this.game.world.centerX,
+          this.game.world.centerY,
+          "GAME OVER",
+          style
+        );
+        text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
+
+        text.inputEnabled = true;
+        text.events.onInputDown.add(() => this.game.state.restart());
+        return;
+      }
+    }
+
     for (let x = 0; x < BOARD_WIDTH; x++) {
       for (let y = BOARD_HEIGHT; y >= 0; y--) {
         this.blockMap[x][y] = this.blockMap[x][y - 1];
-        if (y === 0) this.blockMap[x][y].alpha = 1.0;
+        if (y === 0) {
+          this.blockMap[x][y].alpha = 1.0;
+          this.blockMap[x][y].inputEnabled = true;
+        }
       }
     }
 
     for (let x = 0; x < BOARD_WIDTH; x++) {
       this.blockMap[x][-1] = this.createNewBlock(x, -1);
+      this.blockMap[x][-1].inputEnabled = false;
     }
 
     this.upwardsTween = this.tweenUpwardsOneRow();
