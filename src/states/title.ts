@@ -18,7 +18,7 @@ const blockTypes = [
   Assets.Images.ImagesGreen,
   Assets.Images.ImagesPurple,
   Assets.Images.ImagesRed,
-  Assets.Images.ImagesTeal,
+  Assets.Images.ImagesOrange,
   Assets.Images.ImagesYellow
 ];
 
@@ -36,12 +36,12 @@ export default class Title extends Phaser.State {
   public create(): void {
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
-    this.backgroundTemplateSprite = this.game.add.sprite(
-      this.game.world.centerX,
-      this.game.world.centerY,
-      Assets.Images.ImagesBackgroundTemplate.getName()
-    );
-    this.backgroundTemplateSprite.anchor.setTo(0.5);
+    // this.backgroundTemplateSprite = this.game.add.sprite(
+    //   this.game.world.centerX,
+    //   this.game.world.centerY,
+    //   Assets.Images.ImagesBackgroundTemplate.getName()
+    // );
+    // this.backgroundTemplateSprite.anchor.setTo(0.5);
 
     this.blockGroup = this.game.add.group();
 
@@ -51,7 +51,7 @@ export default class Title extends Phaser.State {
 
     for (let x = 0; x < BOARD_WIDTH; x++) {
       // y starts at -1 as to fill the incoming but inactive row.
-      for (let y = -1; y < 6; y++) {
+      for (let y = -1; y < 3; y++) {
         this.blockMap[x][y] = this.createNewBlock(x, y);
         if (y === -1) this.blockMap[x][y].inputEnabled = false;
       }
@@ -84,7 +84,7 @@ export default class Title extends Phaser.State {
       this.getSafeBlockType(x, y)
     );
 
-    newBlock.scale.setTo(2.70833333, 1.0);
+    // newBlock.scale.setTo(2.70833333, 1.0);
 
     newBlock.inputEnabled = true;
     newBlock.events.onInputDown.add(this.startSwipeTracking, this);
@@ -98,7 +98,6 @@ export default class Title extends Phaser.State {
   private startSwipeTracking(block: Phaser.Sprite, pointer: Phaser.Pointer) {
     this.swipeStartX = pointer.x;
     this.firstBlock = block;
-    this.firstBlock.scale.set(0.8);
   }
 
   private endSwipeTracking(block: Phaser.Sprite, pointer: Phaser.Pointer) {
@@ -120,7 +119,6 @@ export default class Title extends Phaser.State {
       }
     }
 
-    this.firstBlock.scale.set(2.7083333, 1.0);
     this.swipeStartX = null;
     this.firstBlock = null;
   }
@@ -313,7 +311,7 @@ export default class Title extends Phaser.State {
 
   private settleBlocks(): void {
     // Start at 1 so the bottom row doesn't settle off grid.
-    for (let y = 1; y < BOARD_HEIGHT; y++) {
+    for (let y = 1; y <= BOARD_HEIGHT; y++) {
       for (let x = 0; x < BOARD_WIDTH; x++) {
         const block = this.blockMap[x][y];
 

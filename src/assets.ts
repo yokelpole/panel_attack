@@ -6,6 +6,11 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/background_template.png'); }
     }
+    export class ImagesBlack {
+        static getName(): string { return 'black'; }
+
+        static getPNG(): string { return require('assets/images/black.png'); }
+    }
     export class ImagesBlue {
         static getName(): string { return 'blue'; }
 
@@ -15,6 +20,16 @@ export namespace Images {
         static getName(): string { return 'green'; }
 
         static getPNG(): string { return require('assets/images/green.png'); }
+    }
+    export class ImagesGrey {
+        static getName(): string { return 'grey'; }
+
+        static getPNG(): string { return require('assets/images/grey.png'); }
+    }
+    export class ImagesOrange {
+        static getName(): string { return 'orange'; }
+
+        static getPNG(): string { return require('assets/images/orange.png'); }
     }
     export class ImagesPurple {
         static getName(): string { return 'purple'; }
