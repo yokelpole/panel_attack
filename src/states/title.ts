@@ -185,6 +185,7 @@ export default class Title extends Phaser.State {
     }
 
     this.upwardsTween = this.tweenUpwardsOneRow();
+    this.clearBoardCombos();
   }
 
   private logBlockMap(debugString) {
