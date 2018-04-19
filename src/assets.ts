@@ -41,11 +41,6 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/red.png'); }
     }
-    export class ImagesTeal {
-        static getName(): string { return 'teal'; }
-
-        static getPNG(): string { return require('assets/images/teal.png'); }
-    }
     export class ImagesYellow {
         static getName(): string { return 'yellow'; }
 
@@ -54,16 +49,7 @@ export namespace Images {
 }
 
 export namespace Spritesheets {
-    export class SpritesheetsMetalslugMummy374518 {
-        static getName(): string { return 'metalslug_mummy.[37,45,18,0,0]'; }
-
-        static getPNG(): string { return require('assets/spritesheets/metalslug_mummy.[37,45,18,0,0].png'); }
-        static getFrameWidth(): number { return 37; }
-        static getFrameHeight(): number { return 45; }
-        static getFrameMax(): number { return 18; }
-        static getMargin(): number { return 0; }
-        static getSpacing(): number { return 0; }
-    }
+    class IExistSoTypeScriptWillNotComplainAboutAnEmptyNamespace {}
 }
 
 export namespace Atlases {

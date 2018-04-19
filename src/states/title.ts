@@ -36,13 +36,6 @@ export default class Title extends Phaser.State {
   public create(): void {
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
-    // this.backgroundTemplateSprite = this.game.add.sprite(
-    //   this.game.world.centerX,
-    //   this.game.world.centerY,
-    //   Assets.Images.ImagesBackgroundTemplate.getName()
-    // );
-    // this.backgroundTemplateSprite.anchor.setTo(0.5);
-
     this.blockGroup = this.game.add.group();
 
     for (let x = 0; x < BOARD_HEIGHT; x++) {
@@ -84,8 +77,6 @@ export default class Title extends Phaser.State {
       this.getSafeBlockType(x, y)
     );
 
-    // newBlock.scale.setTo(2.70833333, 1.0);
-
     newBlock.inputEnabled = true;
     newBlock.events.onInputDown.add(this.startSwipeTracking, this);
     newBlock.events.onInputUp.add(this.endSwipeTracking, this);
@@ -107,15 +98,16 @@ export default class Title extends Phaser.State {
       if (distanceX > 25) {
         const blockPosition = this.determineBlockPosition(this.firstBlock);
         const swipeDirection = pointer.x - this.swipeStartX > 0 ? 1 : -1;
-        const switchX = blockPosition.x + swipeDirection;
-        const secondBlock = this.blockMap[switchX][blockPosition.y];
+        console.log(`### SWIPE DIRECTION ${swipeDirection === -1 ? "left" : "right"}`);
 
+        const switchX = blockPosition.x + swipeDirection;
         if (switchX < 0 || switchX >= BOARD_WIDTH) return;
 
+        const secondBlock = this.blockMap[switchX][blockPosition.y];
         this.blockMap[switchX][blockPosition.y] = this.firstBlock;
 
         if (secondBlock) this.swapBlocks(blockPosition, this.firstBlock, secondBlock);
-        else this.moveSingleBlock(blockPosition, this.firstBlock, pointer);
+        else this.moveSingleBlock(blockPosition, this.firstBlock, swipeDirection);
       }
     }
 
@@ -123,7 +115,11 @@ export default class Title extends Phaser.State {
     this.firstBlock = null;
   }
 
-  private swapBlocks(blockPosition, firstBlock: Phaser.Sprite, secondBlock: Phaser.Sprite) {
+  private swapBlocks(
+    blockPosition: { x; y },
+    firstBlock: Phaser.Sprite,
+    secondBlock: Phaser.Sprite
+  ) {
     const swapBlockPosition = { x: firstBlock.x, y: firstBlock.y };
 
     // First block has already been moved since it gets moved in every move, not just swaps.
@@ -135,16 +131,14 @@ export default class Title extends Phaser.State {
       .tween(secondBlock)
       .to({ x: swapBlockPosition.x }, BLOCK_MOVE_TIME, "Linear", true);
 
-    this.clearBoardCombos();
+    setTimeout(() => this.clearBoardCombos(), BLOCK_MOVE_TIME);
   }
 
-  private moveSingleBlock(blockPosition, block: Phaser.Sprite, pointer: Phaser.Pointer) {
+  private moveSingleBlock(blockPosition: { x; y }, block: Phaser.Sprite, swipeDirection: number) {
     this.blockMap[blockPosition.x][blockPosition.y] = undefined;
 
     const xPos =
-      pointer.x < this.firstBlock.x
-        ? this.firstBlock.x - BLOCK_WIDTH
-        : this.firstBlock.x + BLOCK_WIDTH;
+      swipeDirection === -1 ? this.firstBlock.x - BLOCK_WIDTH : this.firstBlock.x + BLOCK_WIDTH;
 
     this.game.add
       .tween(this.firstBlock)
@@ -159,20 +153,15 @@ export default class Title extends Phaser.State {
         this.addRowTimer.stop();
 
         const style = {
-          font: "bold 32px Arial",
+          font: "bold 48px Arial",
           fill: "#fff",
           boundsAlignH: "center",
           boundsAlignV: "middle"
         };
 
-        //  The Text is positioned at 0, 100
-        const text = this.game.add.text(
-          this.game.world.centerX,
-          this.game.world.centerY,
-          "GAME OVER",
-          style
-        );
+        const text = this.game.add.text(0, 0, "GAME OVER", style);
         text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
+        text.setTextBounds(0, 0, this.game.width, this.game.height);
 
         text.inputEnabled = true;
         text.events.onInputDown.add(() => this.game.state.restart());
@@ -263,8 +252,12 @@ export default class Title extends Phaser.State {
         : checkedLocation => this.blockMap[x][checkedLocation];
     const getCoordinates =
       axisChecked === axis.x
-        ? (checkedLocation) => ({ x: checkedLocation, y })
-        : (checkedLocation) => ({ x, y: checkedLocation });
+        ? checkedLocation => {
+            return { x: checkedLocation, y };
+          }
+        : checkedLocation => {
+            return { x, y: checkedLocation };
+          };
 
     while (withinBounds(checkedLocation)) {
       const nextBlock = getBlock(checkedLocation);
