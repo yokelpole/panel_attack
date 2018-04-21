@@ -92,22 +92,18 @@ export default class Title extends Phaser.State {
   }
 
   private endSwipeTracking(block: Phaser.Sprite, pointer: Phaser.Pointer) {
-    if (this.swipeStartX) {
-      const distanceX = Math.abs(pointer.x - this.swipeStartX);
+    if (Math.abs(pointer.x - this.swipeStartX) > 25) {
+      const blockPosition = this.determineBlockPosition(this.firstBlock);
+      const swipeDirection = pointer.x - this.swipeStartX > 0 ? 1 : -1;
 
-      if (distanceX > 25) {
-        const blockPosition = this.determineBlockPosition(this.firstBlock);
-        const swipeDirection = pointer.x - this.swipeStartX > 0 ? 1 : -1;
+      const switchX = blockPosition.x + swipeDirection;
+      if (switchX < 0 || switchX >= BOARD_WIDTH) return;
 
-        const switchX = blockPosition.x + swipeDirection;
-        if (switchX < 0 || switchX >= BOARD_WIDTH) return;
+      const secondBlock = this.blockMap[switchX][blockPosition.y];
+      this.blockMap[switchX][blockPosition.y] = this.firstBlock;
 
-        const secondBlock = this.blockMap[switchX][blockPosition.y];
-        this.blockMap[switchX][blockPosition.y] = this.firstBlock;
-
-        if (secondBlock) this.swapBlocks(blockPosition, this.firstBlock, secondBlock);
-        else this.moveSingleBlock(blockPosition, this.firstBlock, swipeDirection);
-      }
+      if (secondBlock) this.swapBlocks(blockPosition, this.firstBlock, secondBlock);
+      else this.moveSingleBlock(blockPosition, this.firstBlock, swipeDirection);
     }
 
     this.swipeStartX = null;
