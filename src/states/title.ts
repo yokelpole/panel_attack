@@ -5,7 +5,7 @@ const BLOCK_WIDTH = 130;
 const BLOCK_HEIGHT = 48;
 const BOARD_WIDTH = 6;
 const BOARD_HEIGHT = 8;
-const ROW_MOVE_TIME = 4000;
+const ROW_MOVE_TIME = 100;
 const BLOCK_MOVE_TIME = 100;
 
 enum axis {
@@ -25,29 +25,26 @@ const blockTypes = [
 export default class Title extends Phaser.State {
   private backgroundTemplateSprite: Phaser.Sprite = null;
   private blockGroup: Phaser.Group = null;
-  private blockMap: Phaser.Sprite[][] = [];
+  private blockMap: Phaser.Sprite[][] = null;
   private firstBlock: Phaser.Sprite = null;
   private addRowTimer: Phaser.Timer = null;
   private upwardsTween: Phaser.Tween = null;
   private haltTimer: Phaser.Timer = null;
-  private activeSettleTweenCount: number = 0;
+  private activeSettleTweenCount: number = null;
   private swipeStartX: number = null;
 
   public create(): void {
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
     this.blockGroup = this.game.add.group();
+    this.activeSettleTweenCount = 0;
 
-    for (let x = 0; x < BOARD_HEIGHT; x++) {
-      this.blockMap[x] = [];
-    }
+    this.blockMap = [];
+    for (let x = 0; x < BOARD_HEIGHT; x++) this.blockMap[x] = [];
 
     for (let x = 0; x < BOARD_WIDTH; x++) {
       // y starts at -1 as to fill the incoming but inactive row.
-      for (let y = -1; y < 3; y++) {
-        this.blockMap[x][y] = this.createNewBlock(x, y);
-        if (y === -1) this.blockMap[x][y].inputEnabled = false;
-      }
+      for (let y = -1; y < 3; y++) this.blockMap[x][y] = this.createNewBlock(x, y);
     }
 
     this.addRowTimer = this.game.time.create(false);
@@ -77,11 +74,14 @@ export default class Title extends Phaser.State {
       this.getSafeBlockType(x, y)
     );
 
-    newBlock.inputEnabled = true;
+    if (y >= 0) newBlock.inputEnabled = true;
+    else {
+      newBlock.inputEnabled = false;
+      newBlock.alpha = 0.5;
+    }
+
     newBlock.events.onInputDown.add(this.startSwipeTracking, this);
     newBlock.events.onInputUp.add(this.endSwipeTracking, this);
-
-    if (y < 0) newBlock.alpha = 0.5;
 
     return newBlock;
   }
@@ -98,7 +98,6 @@ export default class Title extends Phaser.State {
       if (distanceX > 25) {
         const blockPosition = this.determineBlockPosition(this.firstBlock);
         const swipeDirection = pointer.x - this.swipeStartX > 0 ? 1 : -1;
-        console.log(`### SWIPE DIRECTION ${swipeDirection === -1 ? "left" : "right"}`);
 
         const switchX = blockPosition.x + swipeDirection;
         if (switchX < 0 || switchX >= BOARD_WIDTH) return;
@@ -179,10 +178,7 @@ export default class Title extends Phaser.State {
       }
     }
 
-    for (let x = 0; x < BOARD_WIDTH; x++) {
-      this.blockMap[x][-1] = this.createNewBlock(x, -1);
-      this.blockMap[x][-1].inputEnabled = false;
-    }
+    for (let x = 0; x < BOARD_WIDTH; x++) this.blockMap[x][-1] = this.createNewBlock(x, -1);
 
     this.upwardsTween = this.tweenUpwardsOneRow();
     this.clearBoardCombos();
@@ -191,7 +187,7 @@ export default class Title extends Phaser.State {
   private logBlockMap(debugString) {
     console.log(`### ${debugString}`);
 
-    for (let y = 0; y < BOARD_HEIGHT; y++) {
+    for (let y = -1; y < BOARD_HEIGHT; y++) {
       let rowString = "";
 
       for (let x = 0; x < BOARD_WIDTH; x++) {
@@ -346,8 +342,9 @@ export default class Title extends Phaser.State {
       let yCount = 0;
       let xCount = 0;
 
-      for (let testY = y - 2; testY <= x + 2; testY++) {
-        if (testY === y || testY < 0 || testY > BOARD_HEIGHT) continue;
+      for (let testY = y - 2; testY <= y + 2; testY++) {
+        // -1 here due to the extra row at the bottom.
+        if (testY === y || testY < -1 || testY > BOARD_HEIGHT) continue;
         if (_.get(this.blockMap[x][testY], "key") === blockType) yCount++;
       }
 
