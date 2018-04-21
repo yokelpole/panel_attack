@@ -5,7 +5,7 @@ const BLOCK_WIDTH = 130;
 const BLOCK_HEIGHT = 48;
 const BOARD_WIDTH = 6;
 const BOARD_HEIGHT = 8;
-const ROW_MOVE_TIME = 100;
+const ROW_MOVE_TIME = 4000;
 const BLOCK_MOVE_TIME = 100;
 
 enum axis {
