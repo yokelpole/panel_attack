@@ -58,9 +58,10 @@ export default class TweenManager {
   private gameOver(): void {
     this.addRowTimer.stop();
 
+    // TODO: Make text style consistent.
     const style = {
       font: "bold 48px Arial",
-      fill: "#fff",
+      fill: "#FFF",
       boundsAlignH: "center",
       boundsAlignV: "middle"
     };

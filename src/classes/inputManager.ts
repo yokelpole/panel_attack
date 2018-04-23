@@ -1,4 +1,3 @@
-import * as Assets from "../assets";
 import * as _ from "lodash";
 import Constants from "../utils/constants";
 import BlockManager from "./blockManager";

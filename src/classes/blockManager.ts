@@ -3,6 +3,7 @@ import * as _ from "lodash";
 import Constants from "../utils/constants";
 import InputManager from "./inputManager";
 import TweenManager from "./tweenManager";
+import TopBar from "./topBar";
 
 enum axis {
   x,
@@ -10,13 +11,15 @@ enum axis {
 }
 
 export default class BlockManager {
-  public game: Phaser.Game = undefined;
   public blockGroup: Phaser.Group = null;
   public firstBlock: Phaser.Sprite = null;
+  public eliminatedBlocks: number = null;
 
+  private game: Phaser.Game = undefined;
   private blockMap: Phaser.Sprite[][] = null;
   private inputManager: InputManager = null;
   private tweenManager: TweenManager = null;
+  private topBar: TopBar = null;
 
   public static blockTypes = [
     Assets.Images.ImagesBlue,
@@ -33,6 +36,8 @@ export default class BlockManager {
 
     this.blockMap = [];
     for (let x = 0; x < Constants.BOARD_HEIGHT; x++) this.blockMap[x] = [];
+
+    this.eliminatedBlocks = 0;
   }
 
   public setInputManager(inputManager: InputManager) {
@@ -41,6 +46,10 @@ export default class BlockManager {
 
   public setTweenManager(tweenManager: TweenManager) {
     this.tweenManager = tweenManager;
+  }
+
+  public setTopBar(topBar: TopBar) {
+    this.topBar = topBar;
   }
 
   public addStarterRows(): void {
@@ -184,7 +193,11 @@ export default class BlockManager {
     _.each(locations, location => {
       this.blockMap[location.x][location.y].destroy();
       this.blockMap[location.x][location.y] = undefined;
+
+      this.eliminatedBlocks++;
     });
+    
+    this.topBar.update();
   }
 
   private checkBlockForCombos(x: number, y: number, axisChecked: axis): Array<Object> {
