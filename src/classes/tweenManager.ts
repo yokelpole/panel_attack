@@ -48,9 +48,9 @@ export default class TweenManager {
       return;
     }
 
-    this.blockManager.addNewRow();
     this.upwardsTween = this.tweenUpwardsOneRow();
-    this.blockManager.clearCombos();
+    this.blockManager.addNewRow();
+    this.blockManager.evaluateBoard();
   }
 
   // TODO: This doesn't belong in tweenManager at all.
@@ -89,7 +89,7 @@ export default class TweenManager {
         if (!this.activeSettleTweenCount) {
           // Can only check board combos once everything is settled or else
           // tweening location of objects gets thrown off.
-          this.blockManager.clearCombos();
+          this.blockManager.evaluateBoard();
         }
       }, this);
     this.activeSettleTweenCount += 1;
@@ -102,7 +102,7 @@ export default class TweenManager {
     this.game.add
       .tween(block)
       .to({ x: xPos }, Constants.BLOCK_MOVE_TIME, "Linear", true, 0)
-      .onComplete.add(this.blockManager.clearCombos, this.blockManager);
+      .onComplete.add(this.blockManager.evaluateBoard, this.blockManager);
   }
 
   public swapBlocks(firstBlock: Phaser.Sprite, secondBlock: Phaser.Sprite) {
@@ -115,7 +115,7 @@ export default class TweenManager {
       .tween(secondBlock)
       .to({ x: swapBlockPosition.x }, Constants.BLOCK_MOVE_TIME, "Linear", true);
 
-    setTimeout(() => this.blockManager.clearCombos(), Constants.BLOCK_MOVE_TIME);
+    setTimeout(() => this.blockManager.evaluateBoard(), Constants.BLOCK_MOVE_TIME);
   }
 
   private tweenUpwardsOneRow(): Phaser.Tween {

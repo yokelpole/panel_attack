@@ -76,7 +76,7 @@ export default class BlockManager {
   }
 
   public determineBlockPosition(block: Phaser.Sprite) {
-    const topRow = _.first(this.blockMap[0]);
+    const topRow = _.first(_.reject(this.blockMap[0], _.isUndefined));
     const xGridPos = Math.round((block.x - topRow.x) / Constants.BLOCK_WIDTH);
     const yGridPos = Math.round(Math.abs((block.y - topRow.y) / Constants.BLOCK_HEIGHT));
 
@@ -94,8 +94,6 @@ export default class BlockManager {
 
     if (secondBlock) this.swapBlocks(blockPosition, selectedBlock, secondBlock);
     else this.moveSingleBlock(blockPosition, selectedBlock, swipeDirection);
-
-    this.logBlockMap("SWAP");
   }
 
   public blocksTooHigh(): boolean {
@@ -120,37 +118,41 @@ export default class BlockManager {
     }
   }
 
-  private settleBlocks(): void {
+  public evaluateBoard(): void {
+    let settlingBlocks = false;
+
     // Start at 1 so the bottom row doesn't settle off grid.
     for (let y = 1; y <= Constants.BOARD_HEIGHT; y++) {
       for (let x = 0; x < Constants.BOARD_WIDTH; x++) {
         const block = this.blockMap[x][y];
 
-        if (block && !this.blockMap[x][y - 1]) {
-          let currentY = y - 1;
+        if (!block || this.blockMap[x][y - 1]) continue;
 
-          while (currentY > 0 && !this.blockMap[x][currentY - 1]) {
-            currentY -= 1;
-          }
+        settlingBlocks = true;
+        let currentY = y - 1;
 
-          this.blockMap[x][currentY] = block;
-          this.blockMap[x][y] = undefined;
-
-          this.tweenManager.settleBlock(block, y - currentY);
+        while (currentY > 0 && !this.blockMap[x][currentY - 1]) {
+          currentY -= 1;
         }
+
+        this.blockMap[x][currentY] = block;
+        this.blockMap[x][y] = undefined;
+
+        this.tweenManager.settleBlock(block, y - currentY);
       }
     }
+
+    if (!settlingBlocks) this.clearCombos();
   }
 
-  public clearCombos(): void {
+  private clearCombos(): void {
     const combos = this.scanForCombos();
 
     if (!_.isEmpty(combos)) {
       this.tweenManager.pauseTweens();
       this.clearFoundCombos(combos);
+      this.evaluateBoard();
     }
-
-    this.settleBlocks();
   }
 
   private swapBlocks(
@@ -196,7 +198,7 @@ export default class BlockManager {
 
       this.eliminatedBlocks++;
     });
-    
+
     this.topBar.update();
   }
 
