@@ -7,7 +7,6 @@ export default class TweenManager {
   private haltTimer: Phaser.Timer = null;
   private addRowTimer: Phaser.Timer = null;
   private upwardsTween: Phaser.Tween = null;
-  private activeSettleTweenCount: number = 0;
 
   constructor(game: Phaser.Game, blockManager: BlockManager) {
     this.game = game;
@@ -85,14 +84,13 @@ export default class TweenManager {
         0
       )
       .onComplete.add(tween => {
-        this.activeSettleTweenCount -= 1;
-        if (!this.activeSettleTweenCount) {
+        // TODO: Counting the # of active tweens is a bad way to do this once more things happen.
+        if (this.game.tweens.getAll().length === 2) {
           // Can only check board combos once everything is settled or else
           // tweening location of objects gets thrown off.
           this.blockManager.evaluateBoard();
         }
       }, this);
-    this.activeSettleTweenCount += 1;
   }
 
   public moveSingleBlock(block: Phaser.Sprite, swipeDirection: 1 | -1) {

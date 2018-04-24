@@ -76,7 +76,7 @@ export default class BlockManager {
   }
 
   public determineBlockPosition(block: Phaser.Sprite) {
-    const topRow = _.first(_.reject(this.blockMap[0], _.isUndefined));
+    const topRow = _.first(_.reject(_.map(this.blockMap, column => column[0]), _.isUndefined));
     const xGridPos = Math.round((block.x - topRow.x) / Constants.BLOCK_WIDTH);
     const yGridPos = Math.round(Math.abs((block.y - topRow.y) / Constants.BLOCK_HEIGHT));
 
