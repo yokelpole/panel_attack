@@ -92,7 +92,7 @@ export default class BlockManager {
     const secondBlock = this.blockMap[switchX][blockPosition.y];
     this.blockMap[switchX][blockPosition.y] = selectedBlock;
 
-    if (secondBlock) this.swapBlocks(blockPosition, selectedBlock, secondBlock);
+    if (secondBlock) this.swapBlocks(blockPosition, selectedBlock, secondBlock, swipeDirection);
     else this.moveSingleBlock(blockPosition, selectedBlock, swipeDirection);
   }
 
@@ -158,11 +158,12 @@ export default class BlockManager {
   private swapBlocks(
     blockPosition: { x; y },
     firstBlock: Phaser.Sprite,
-    secondBlock: Phaser.Sprite
+    secondBlock: Phaser.Sprite,
+    swipeDirection: 1 | -1
   ) {
     // First block has already been moved since it gets moved in every move, not just swaps.
     this.blockMap[blockPosition.x][blockPosition.y] = secondBlock;
-    this.tweenManager.swapBlocks(firstBlock, secondBlock);
+    this.tweenManager.swapBlocks(firstBlock, secondBlock, swipeDirection);
   }
 
   private moveSingleBlock(blockPosition: { x; y }, block: Phaser.Sprite, swipeDirection: 1 | -1) {
@@ -241,6 +242,10 @@ export default class BlockManager {
     else return undefined;
   }
 
+  public getBlockXScreenPosition(x) {
+    return this.game.world.width / 2 - Constants.BLOCK_WIDTH * 3 + x * Constants.BLOCK_WIDTH;
+  }
+
   private createNewBlock(x: number, y: number): Phaser.Sprite {
     const yPos =
       y > 0
@@ -251,7 +256,7 @@ export default class BlockManager {
           y * Constants.BLOCK_HEIGHT;
 
     const newBlock: Phaser.Sprite = this.blockGroup.create(
-      this.game.world.width / 2 - Constants.BLOCK_WIDTH * 3 + x * Constants.BLOCK_WIDTH,
+      this.getBlockXScreenPosition(x),
       yPos,
       this.getSafeBlockType(x, y)
     );

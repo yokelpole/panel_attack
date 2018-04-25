@@ -73,21 +73,25 @@ export default class TweenManager {
     text.events.onInputDown.add(() => this.game.state.restart());
   }
 
-  public settleBlock(block: Phaser.Sprite, yOffset: number): void {
+  public settleBlock(block: Phaser.Sprite, yPosition: number): void {
+    block.input.enabled = false;
+
     this.game.add
       .tween(block)
       .to(
-        { y: block.y + Constants.BLOCK_HEIGHT * yOffset },
+        { y: block.y + Constants.BLOCK_HEIGHT * yPosition },
         Constants.BLOCK_MOVE_TIME,
         "Linear",
         true,
         0
       )
       .onComplete.add(tween => {
+        block.input.enabled = true;
+
         // TODO: Counting the # of active tweens is a bad way to do this once more things happen.
-        if (this.game.tweens.getAll().length === 2) {
+        if (this.game.tweens.getAll().length <= 2) {
           // Can only check board combos once everything is settled or else
-          // tweening location of objects gets thrown off.
+          // tweening location of objects gets thrown off
           this.blockManager.evaluateBoard();
         }
       }, this);
@@ -97,23 +101,45 @@ export default class TweenManager {
     const xPos =
       swipeDirection === -1 ? block.x - Constants.BLOCK_WIDTH : block.x + Constants.BLOCK_WIDTH;
 
+    block.input.enabled = false;
+
     this.game.add
       .tween(block)
       .to({ x: xPos }, Constants.BLOCK_MOVE_TIME, "Linear", true, 0)
-      .onComplete.add(this.blockManager.evaluateBoard, this.blockManager);
+      .onComplete.add(() => {
+        block.input.enabled = true;
+        this.blockManager.evaluateBoard();
+      }, this.blockManager);
   }
 
-  public swapBlocks(firstBlock: Phaser.Sprite, secondBlock: Phaser.Sprite) {
-    const swapBlockPosition = { x: firstBlock.x, y: firstBlock.y };
+  public swapBlocks(firstBlock: Phaser.Sprite, secondBlock: Phaser.Sprite, swipeDirection: 1 | -1) {
+    const firstBlockPosition = this.blockManager.determineBlockPosition(firstBlock);
+    const secondBlockPosition = this.blockManager.determineBlockPosition(secondBlock);
+
+    firstBlock.input.enabled = false;
+    secondBlock.input.enabled = false;
+
+    const newFirstBlockX =
+      swipeDirection === 1
+        ? this.blockManager.getBlockXScreenPosition(firstBlockPosition.x + 1)
+        : this.blockManager.getBlockXScreenPosition(firstBlockPosition.x - 1);
+    const newSecondBlockX =
+      swipeDirection === 1
+        ? this.blockManager.getBlockXScreenPosition(secondBlockPosition.x - 1)
+        : this.blockManager.getBlockXScreenPosition(secondBlockPosition.x + 1);
 
     this.game.add
       .tween(firstBlock)
-      .to({ x: secondBlock.x }, Constants.BLOCK_MOVE_TIME, "Linear", true);
+      .to({ x: newFirstBlockX }, Constants.BLOCK_MOVE_TIME, "Linear", true);
+
     this.game.add
       .tween(secondBlock)
-      .to({ x: swapBlockPosition.x }, Constants.BLOCK_MOVE_TIME, "Linear", true);
-
-    setTimeout(() => this.blockManager.evaluateBoard(), Constants.BLOCK_MOVE_TIME);
+      .to({ x: newSecondBlockX }, Constants.BLOCK_MOVE_TIME, "Linear", true)
+      .onComplete.add(() => {
+        firstBlock.input.enabled = true;
+        secondBlock.input.enabled = true;
+        this.blockManager.evaluateBoard();
+      }, this.blockManager);
   }
 
   private tweenUpwardsOneRow(): Phaser.Tween {

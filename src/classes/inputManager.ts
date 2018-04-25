@@ -3,8 +3,6 @@ import Constants from "../utils/constants";
 import BlockManager from "./blockManager";
 
 export default class InputManager {
-  public activeSettleTweenCount: number = 0;
-
   private swipeStartX: number = null;
   private selectedBlock: Phaser.Sprite = null;
   private blockManager: BlockManager = null;
