@@ -7,11 +7,14 @@ export default class TweenManager {
   private haltTimer: Phaser.Timer = null;
   private addRowTimer: Phaser.Timer = null;
   private upwardsTween: Phaser.Tween = null;
+  private settleTweenCount: number = null;
 
   constructor(game: Phaser.Game, blockManager: BlockManager) {
     this.game = game;
     this.blockManager = blockManager;
     this.blockManager.setTweenManager(this);
+
+    this.settleTweenCount = 0;
   }
 
   public startTweenAndTimer() {
@@ -87,14 +90,16 @@ export default class TweenManager {
       )
       .onComplete.add(tween => {
         block.input.enabled = true;
+        this.settleTweenCount -= 1;
 
-        // TODO: Counting the # of active tweens is a bad way to do this once more things happen.
-        if (this.game.tweens.getAll().length <= 2) {
+        if (!this.settleTweenCount) {
           // Can only check board combos once everything is settled or else
           // tweening location of objects gets thrown off
           this.blockManager.evaluateBoard();
         }
       }, this);
+
+    this.settleTweenCount += 1;
   }
 
   public moveSingleBlock(block: Phaser.Sprite, swipeDirection: 1 | -1) {
@@ -112,29 +117,30 @@ export default class TweenManager {
       }, this.blockManager);
   }
 
-  public swapBlocks(firstBlock: Phaser.Sprite, secondBlock: Phaser.Sprite, swipeDirection: 1 | -1) {
+  public swapBlocks(firstBlock: Phaser.Sprite, secondBlock: Phaser.Sprite) {
     const firstBlockPosition = this.blockManager.determineBlockPosition(firstBlock);
     const secondBlockPosition = this.blockManager.determineBlockPosition(secondBlock);
 
     firstBlock.input.enabled = false;
     secondBlock.input.enabled = false;
 
-    const newFirstBlockX =
-      swipeDirection === 1
-        ? this.blockManager.getBlockXScreenPosition(firstBlockPosition.x + 1)
-        : this.blockManager.getBlockXScreenPosition(firstBlockPosition.x - 1);
-    const newSecondBlockX =
-      swipeDirection === 1
-        ? this.blockManager.getBlockXScreenPosition(secondBlockPosition.x - 1)
-        : this.blockManager.getBlockXScreenPosition(secondBlockPosition.x + 1);
-
     this.game.add
       .tween(firstBlock)
-      .to({ x: newFirstBlockX }, Constants.BLOCK_MOVE_TIME, "Linear", true);
+      .to(
+        { x: this.blockManager.getBlockXScreenPosition(secondBlockPosition.x) },
+        Constants.BLOCK_MOVE_TIME,
+        "Linear",
+        true
+      );
 
     this.game.add
       .tween(secondBlock)
-      .to({ x: newSecondBlockX }, Constants.BLOCK_MOVE_TIME, "Linear", true)
+      .to(
+        { x: this.blockManager.getBlockXScreenPosition(firstBlockPosition.x) },
+        Constants.BLOCK_MOVE_TIME,
+        "Linear",
+        true
+      )
       .onComplete.add(() => {
         firstBlock.input.enabled = true;
         secondBlock.input.enabled = true;
