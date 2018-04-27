@@ -144,7 +144,10 @@ export default class BlockManager {
         this.blockMap[x][currentY] = block;
         this.blockMap[x][y] = undefined;
 
-        this.tweenManager.settleBlock(block, y - currentY);
+        const newY =
+          this.blockMap[x][-1].y - Constants.BLOCK_HEIGHT - Constants.BLOCK_HEIGHT * currentY;
+
+        this.tweenManager.settleBlock(block, newY);
       }
     }
 

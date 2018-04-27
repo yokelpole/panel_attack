@@ -81,13 +81,7 @@ export default class TweenManager {
 
     this.game.add
       .tween(block)
-      .to(
-        { y: block.y + Constants.BLOCK_HEIGHT * yPosition },
-        Constants.BLOCK_MOVE_TIME,
-        "Linear",
-        true,
-        0
-      )
+      .to({ y: yPosition }, Constants.BLOCK_MOVE_TIME, "Linear", true, 0)
       .onComplete.add(tween => {
         block.input.enabled = true;
         this.blockManager.evaluateBoard();
