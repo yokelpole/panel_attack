@@ -84,12 +84,16 @@ export default class BlockManager {
   }
 
   public moveBlocks(selectedBlock: Phaser.Sprite, pointer: Phaser.Pointer, swipeDirection: 1 | -1) {
+    if (_.get(selectedBlock, ["input", "enabled"]) === false) return;
+
     const blockPosition = this.determineBlockPosition(selectedBlock);
 
     const switchX = blockPosition.x + swipeDirection;
     if (switchX < 0 || switchX >= Constants.BOARD_WIDTH) return;
 
     const secondBlock = this.blockMap[switchX][blockPosition.y];
+    if (_.get(secondBlock, ["input", "enabled"]) === false) return;
+
     this.blockMap[switchX][blockPosition.y] = selectedBlock;
 
     if (secondBlock) this.swapBlocks(blockPosition, selectedBlock, secondBlock);
@@ -121,6 +125,8 @@ export default class BlockManager {
   public evaluateBoard(): void {
     let settlingBlocks = false;
 
+    this.clearCombos();
+
     // Start at 1 so the bottom row doesn't settle off grid.
     for (let y = 1; y <= Constants.BOARD_HEIGHT; y++) {
       for (let x = 0; x < Constants.BOARD_WIDTH; x++) {
@@ -142,7 +148,7 @@ export default class BlockManager {
       }
     }
 
-    if (!settlingBlocks) this.clearCombos();
+    if (settlingBlocks) this.clearCombos();
   }
 
   private clearCombos(): void {
@@ -158,7 +164,7 @@ export default class BlockManager {
   private swapBlocks(
     blockPosition: { x; y },
     firstBlock: Phaser.Sprite,
-    secondBlock: Phaser.Sprite,
+    secondBlock: Phaser.Sprite
   ) {
     // First block has already been moved since it gets moved in every move, not just swaps.
     this.blockMap[blockPosition.x][blockPosition.y] = secondBlock;
@@ -176,7 +182,10 @@ export default class BlockManager {
     for (let y = 0; y < Constants.BOARD_HEIGHT; y++) {
       for (let x = 0; x < Constants.BOARD_WIDTH; x++) {
         const comboCooridnates = this.checkBlockForCombos(x, y, axis.x);
-        if (comboCooridnates) comboArray.push(comboCooridnates);
+        if (comboCooridnates) {
+          x += comboCooridnates.length;
+          comboArray.push(comboCooridnates);
+        }
       }
     }
 
@@ -184,7 +193,10 @@ export default class BlockManager {
     for (let x = 0; x < Constants.BOARD_WIDTH; x++) {
       for (let y = 0; y < Constants.BOARD_HEIGHT; y++) {
         const comboCoordinates = this.checkBlockForCombos(x, y, axis.y);
-        if (comboCoordinates) comboArray.push(comboCoordinates);
+        if (comboCoordinates) {
+          y += comboCoordinates.length;
+          comboArray.push(comboCoordinates);
+        }
       }
     }
 
@@ -230,6 +242,7 @@ export default class BlockManager {
     while (withinBounds(checkedLocation)) {
       const nextBlock = getBlock(checkedLocation);
       if (!nextBlock) break;
+      if (!nextBlock.input.enabled) break;
 
       if (nextBlock.key === currentBlock.key) {
         comboCoordinates.push(getCoordinates(checkedLocation));

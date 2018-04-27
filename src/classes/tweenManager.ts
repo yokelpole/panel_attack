@@ -90,13 +90,7 @@ export default class TweenManager {
       )
       .onComplete.add(tween => {
         block.input.enabled = true;
-        this.settleTweenCount -= 1;
-
-        if (!this.settleTweenCount) {
-          // Can only check board combos once everything is settled or else
-          // tweening location of objects gets thrown off
-          this.blockManager.evaluateBoard();
-        }
+        this.blockManager.evaluateBoard();
       }, this);
 
     this.settleTweenCount += 1;
