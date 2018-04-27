@@ -125,8 +125,6 @@ export default class BlockManager {
   public evaluateBoard(): void {
     let settlingBlocks = false;
 
-    this.clearCombos();
-
     // Start at 1 so the bottom row doesn't settle off grid.
     for (let y = 1; y <= Constants.BOARD_HEIGHT; y++) {
       for (let x = 0; x < Constants.BOARD_WIDTH; x++) {
@@ -151,7 +149,7 @@ export default class BlockManager {
       }
     }
 
-    if (settlingBlocks) this.clearCombos();
+    if (!settlingBlocks) this.clearCombos();
   }
 
   private clearCombos(): void {
@@ -257,8 +255,8 @@ export default class BlockManager {
     else return undefined;
   }
 
-  public getBlockXScreenPosition(x): number {
-    return this.game.world.width / 2 - Constants.BLOCK_WIDTH * 3 + x * Constants.BLOCK_WIDTH;
+  public getBlockXRowPosition(x): number {
+    return this.blockMap[x][-1].x;
   }
 
   private createNewBlock(x: number, y: number): Phaser.Sprite {
@@ -271,7 +269,7 @@ export default class BlockManager {
           y * Constants.BLOCK_HEIGHT;
 
     const newBlock: Phaser.Sprite = this.blockGroup.create(
-      this.getBlockXScreenPosition(x),
+      this.game.world.width / 2 - Constants.BLOCK_WIDTH * 3 + x * Constants.BLOCK_WIDTH,
       yPos,
       this.getSafeBlockType(x, y)
     );

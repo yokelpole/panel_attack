@@ -115,7 +115,7 @@ export default class TweenManager {
     this.game.add
       .tween(firstBlock)
       .to(
-        { x: this.blockManager.getBlockXScreenPosition(secondBlockPosition.x) },
+        { x: this.blockManager.getBlockXRowPosition(secondBlockPosition.x) },
         Constants.BLOCK_MOVE_TIME,
         "Linear",
         true
@@ -124,7 +124,7 @@ export default class TweenManager {
     this.game.add
       .tween(secondBlock)
       .to(
-        { x: this.blockManager.getBlockXScreenPosition(firstBlockPosition.x) },
+        { x: this.blockManager.getBlockXRowPosition(firstBlockPosition.x) },
         Constants.BLOCK_MOVE_TIME,
         "Linear",
         true
