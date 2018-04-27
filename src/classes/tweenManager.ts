@@ -91,14 +91,19 @@ export default class TweenManager {
   }
 
   public moveSingleBlock(block: Phaser.Sprite, swipeDirection: 1 | -1) {
-    const xPos =
-      swipeDirection === -1 ? block.x - Constants.BLOCK_WIDTH : block.x + Constants.BLOCK_WIDTH;
+    const blockPosition = this.blockManager.determineBlockPosition(block);
 
     block.input.enabled = false;
 
     this.game.add
       .tween(block)
-      .to({ x: xPos }, Constants.BLOCK_MOVE_TIME, "Linear", true, 0)
+      .to(
+        { x: this.blockManager.getBlockXRowPosition(blockPosition.x + swipeDirection) },
+        Constants.BLOCK_MOVE_TIME,
+        "Linear",
+        true,
+        0
+      )
       .onComplete.add(() => {
         block.input.enabled = true;
         this.blockManager.evaluateBoard();
