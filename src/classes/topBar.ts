@@ -19,7 +19,7 @@ export default class TopBar {
     this.scoreText = this.game.add.text(
       0,
       0,
-      `SCORE: ${this.blockManager.eliminatedBlocks.toString()}`,
+      this.getScoreString(),
       this.getTextStyle()
     );
 
@@ -40,7 +40,11 @@ export default class TopBar {
   }
 
   public update() {
-    this.scoreText.setText(this.blockManager.eliminatedBlocks.toString());
+    this.scoreText.setText(this.getScoreString());
+  }
+
+  private getScoreString() {
+   return `SCORE: ${this.blockManager.eliminatedBlocks.toString()}`;
   }
 
   private getTextStyle() {
