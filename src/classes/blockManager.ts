@@ -102,7 +102,9 @@ export default class BlockManager {
 
   public blocksTooHigh(): boolean {
     for (let x = 0; x < Constants.BOARD_WIDTH; x++) {
-      if (this.blockMap[x][Constants.BOARD_HEIGHT]) return true;
+      // Need to subtract one since array count starts at zero but that makes no sense
+      // in context of the constants file.
+      if (this.blockMap[x][Constants.BOARD_HEIGHT - 1]) return true;
     }
 
     return false;
@@ -156,7 +158,7 @@ export default class BlockManager {
     const combos = this.scanForCombos();
 
     if (!_.isEmpty(combos)) {
-      this.tweenManager.pauseTweens();
+      this.tweenManager.delayTweens();
       this.clearFoundCombos(combos);
       this.evaluateBoard();
     }
@@ -212,7 +214,7 @@ export default class BlockManager {
       this.eliminatedBlocks++;
     });
 
-    this.topBar.update();
+    this.topBar.updateScore();
   }
 
   private checkBlockForCombos(x: number, y: number, axisChecked: axis): Array<Object> {

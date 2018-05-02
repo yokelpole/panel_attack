@@ -25,7 +25,7 @@ export default class TweenManager {
     this.upwardsTween = this.tweenUpwardsOneRow();
   }
 
-  public pauseTweens(): void {
+  public delayTweens(): void {
     this.upwardsTween.pause();
     this.addRowTimer.pause();
 

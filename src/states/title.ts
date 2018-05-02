@@ -19,7 +19,7 @@ export default class Title extends Phaser.State {
     this.blockManager = new BlockManager(this.game);
     this.tweenManager = new TweenManager(this.game, this.blockManager);
     this.inputManager = new InputManager(this.game, this.blockManager);
-    this.topBar = new TopBar(this.game, this.blockManager);
+    this.topBar = new TopBar(this.game, this.blockManager, this.inputManager);
 
     this.blockManager.addStarterRows();
     this.tweenManager.startTweenAndTimer();
