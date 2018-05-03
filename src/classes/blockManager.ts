@@ -208,7 +208,7 @@ export default class BlockManager {
 
   private clearFoundCombos(locations): void {
     _.each(locations, location => {
-      this.blockMap[location.x][location.y].destroy();
+      this.tweenManager.removeBlock(this.blockMap[location.x][location.y]);
       this.blockMap[location.x][location.y] = undefined;
 
       this.eliminatedBlocks++;

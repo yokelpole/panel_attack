@@ -81,7 +81,7 @@ export default class TweenManager {
 
     this.game.add
       .tween(block)
-      .to({ y: yPosition }, Constants.BLOCK_MOVE_TIME, "Linear", true, 0)
+      .to({ y: yPosition }, Constants.BLOCK_MOVE_TIME, Phaser.Easing.Linear.None, true, 0)
       .onComplete.add(tween => {
         block.input.enabled = true;
         this.blockManager.evaluateBoard();
@@ -100,7 +100,7 @@ export default class TweenManager {
       .to(
         { x: this.blockManager.getBlockXRowPosition(blockPosition.x + swipeDirection) },
         Constants.BLOCK_MOVE_TIME,
-        "Linear",
+        Phaser.Easing.Linear.None,
         true,
         0
       )
@@ -122,7 +122,7 @@ export default class TweenManager {
       .to(
         { x: this.blockManager.getBlockXRowPosition(secondBlockPosition.x) },
         Constants.BLOCK_MOVE_TIME,
-        "Linear",
+        Phaser.Easing.Linear.None,
         true
       );
 
@@ -131,7 +131,7 @@ export default class TweenManager {
       .to(
         { x: this.blockManager.getBlockXRowPosition(firstBlockPosition.x) },
         Constants.BLOCK_MOVE_TIME,
-        "Linear",
+        Phaser.Easing.Linear.None,
         true
       )
       .onComplete.add(() => {
@@ -141,13 +141,20 @@ export default class TweenManager {
       }, this.blockManager);
   }
 
+  public removeBlock(block: Phaser.Sprite) {
+    this.game.add
+      .tween(block)
+      .to({ alpha: 0 }, Constants.BLOCK_MOVE_TIME, Phaser.Easing.Linear.None, true)
+      .onComplete.add(() => block.destroy());
+  }
+
   private tweenUpwardsOneRow(): Phaser.Tween {
     return this.game.add
       .tween(this.blockManager.blockGroup)
       .to(
         { y: this.blockManager.blockGroup.y - Constants.BLOCK_HEIGHT },
         Constants.ROW_MOVE_TIME,
-        "Linear",
+        Phaser.Easing.Linear.None,
         true,
         0
       );
