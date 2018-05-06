@@ -11,8 +11,6 @@ export default class MenuManager {
   }
 
   public showGameOver(): void {
-    this.game.paused = true;
-
     // TODO: Make text style consistent.
     const style = {
       font: "bold 48px Arial",
