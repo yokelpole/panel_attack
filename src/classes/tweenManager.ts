@@ -1,20 +1,16 @@
-import BlockManager from "./blockManager";
+import GameManager from "./gameManager";
 import Constants from "../utils/constants";
 
 export default class TweenManager {
-  private blockManager: BlockManager = null;
+  private gameManager: GameManager = null;
   private game: Phaser.Game = null;
   private haltTimer: Phaser.Timer = null;
   private addRowTimer: Phaser.Timer = null;
   private upwardsTween: Phaser.Tween = null;
-  private settleTweenCount: number = null;
 
-  constructor(game: Phaser.Game, blockManager: BlockManager) {
+  constructor(game: Phaser.Game, gameManager: GameManager) {
     this.game = game;
-    this.blockManager = blockManager;
-    this.blockManager.setTweenManager(this);
-
-    this.settleTweenCount = 0;
+    this.gameManager = gameManager;
   }
 
   public startTweenAndTimer() {
@@ -45,35 +41,14 @@ export default class TweenManager {
 
   public addRow(): void {
     // End game if blocks are too high.
-    if (this.blockManager.blocksTooHigh()) {
-      this.gameOver();
+    if (this.gameManager.blockManager.blocksTooHigh()) {
+      this.gameManager.menuManager.showGameOver();
       return;
     }
 
     this.upwardsTween = this.tweenUpwardsOneRow();
-    this.blockManager.addNewRow();
-    this.blockManager.evaluateBoard();
-  }
-
-  // TODO: This doesn't belong in tweenManager at all.
-  // Maybe a gameManager?
-  private gameOver(): void {
-    this.addRowTimer.stop();
-
-    // TODO: Make text style consistent.
-    const style = {
-      font: "bold 48px Arial",
-      fill: "#FFF",
-      boundsAlignH: "center",
-      boundsAlignV: "middle"
-    };
-
-    const text = this.game.add.text(0, 0, "GAME OVER", style);
-    text.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
-    text.setTextBounds(0, 0, this.game.width, this.game.height);
-
-    text.inputEnabled = true;
-    text.events.onInputDown.add(() => this.game.state.restart());
+    this.gameManager.blockManager.addNewRow();
+    this.gameManager.blockManager.evaluateBoard();
   }
 
   public settleBlock(block: Phaser.Sprite, yPosition: number): void {
@@ -84,21 +59,19 @@ export default class TweenManager {
       .to({ y: yPosition }, Constants.BLOCK_MOVE_TIME, Phaser.Easing.Linear.None, true, 0)
       .onComplete.add(tween => {
         block.input.enabled = true;
-        this.blockManager.evaluateBoard();
+        this.gameManager.blockManager.evaluateBoard();
       }, this);
-
-    this.settleTweenCount += 1;
   }
 
   public moveSingleBlock(block: Phaser.Sprite, swipeDirection: 1 | -1) {
-    const blockPosition = this.blockManager.determineBlockPosition(block);
+    const blockPosition = this.gameManager.blockManager.determineBlockPosition(block);
 
     block.input.enabled = false;
 
     this.game.add
       .tween(block)
       .to(
-        { x: this.blockManager.getBlockXRowPosition(blockPosition.x + swipeDirection) },
+        { x: this.gameManager.blockManager.getBlockXRowPosition(blockPosition.x + swipeDirection) },
         Constants.BLOCK_MOVE_TIME,
         Phaser.Easing.Linear.None,
         true,
@@ -106,13 +79,13 @@ export default class TweenManager {
       )
       .onComplete.add(() => {
         block.input.enabled = true;
-        this.blockManager.evaluateBoard();
-      }, this.blockManager);
+        this.gameManager.blockManager.evaluateBoard();
+      }, this.gameManager.blockManager);
   }
 
   public swapBlocks(firstBlock: Phaser.Sprite, secondBlock: Phaser.Sprite) {
-    const firstBlockPosition = this.blockManager.determineBlockPosition(firstBlock);
-    const secondBlockPosition = this.blockManager.determineBlockPosition(secondBlock);
+    const firstBlockPosition = this.gameManager.blockManager.determineBlockPosition(firstBlock);
+    const secondBlockPosition = this.gameManager.blockManager.determineBlockPosition(secondBlock);
 
     firstBlock.input.enabled = false;
     secondBlock.input.enabled = false;
@@ -120,7 +93,7 @@ export default class TweenManager {
     this.game.add
       .tween(firstBlock)
       .to(
-        { x: this.blockManager.getBlockXRowPosition(secondBlockPosition.x) },
+        { x: this.gameManager.blockManager.getBlockXRowPosition(secondBlockPosition.x) },
         Constants.BLOCK_MOVE_TIME,
         Phaser.Easing.Linear.None,
         true
@@ -129,7 +102,7 @@ export default class TweenManager {
     this.game.add
       .tween(secondBlock)
       .to(
-        { x: this.blockManager.getBlockXRowPosition(firstBlockPosition.x) },
+        { x: this.gameManager.blockManager.getBlockXRowPosition(firstBlockPosition.x) },
         Constants.BLOCK_MOVE_TIME,
         Phaser.Easing.Linear.None,
         true
@@ -137,8 +110,8 @@ export default class TweenManager {
       .onComplete.add(() => {
         firstBlock.input.enabled = true;
         secondBlock.input.enabled = true;
-        this.blockManager.evaluateBoard();
-      }, this.blockManager);
+        this.gameManager.blockManager.evaluateBoard();
+      }, this.gameManager.blockManager);
   }
 
   public removeBlock(block: Phaser.Sprite) {
@@ -150,9 +123,9 @@ export default class TweenManager {
 
   private tweenUpwardsOneRow(): Phaser.Tween {
     return this.game.add
-      .tween(this.blockManager.blockGroup)
+      .tween(this.gameManager.blockManager.blockGroup)
       .to(
-        { y: this.blockManager.blockGroup.y - Constants.BLOCK_HEIGHT },
+        { y: this.gameManager.blockManager.blockGroup.y - Constants.BLOCK_HEIGHT },
         Constants.ROW_MOVE_TIME,
         Phaser.Easing.Linear.None,
         true,

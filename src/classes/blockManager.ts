@@ -1,9 +1,7 @@
 import * as Assets from "../assets";
 import * as _ from "lodash";
 import Constants from "../utils/constants";
-import InputManager from "./inputManager";
-import TweenManager from "./tweenManager";
-import TopBar from "./topBar";
+import GameManager from "./gameManager";
 
 enum axis {
   x,
@@ -17,9 +15,7 @@ export default class BlockManager {
 
   private game: Phaser.Game = undefined;
   private blockMap: Phaser.Sprite[][] = null;
-  private inputManager: InputManager = null;
-  private tweenManager: TweenManager = null;
-  private topBar: TopBar = null;
+  private gameManager: GameManager = null;
 
   public static blockTypes = [
     Assets.Images.ImagesBlue,
@@ -30,26 +26,16 @@ export default class BlockManager {
     Assets.Images.ImagesYellow
   ];
 
-  constructor(game: Phaser.Game) {
+  constructor(game: Phaser.Game, gameManager: GameManager) {
     this.game = game;
+    this.gameManager = gameManager;
+
     this.blockGroup = this.game.add.group();
 
     this.blockMap = [];
     for (let x = 0; x < Constants.BOARD_HEIGHT; x++) this.blockMap[x] = [];
 
     this.eliminatedBlocks = 0;
-  }
-
-  public setInputManager(inputManager: InputManager) {
-    this.inputManager = inputManager;
-  }
-
-  public setTweenManager(tweenManager: TweenManager) {
-    this.tweenManager = tweenManager;
-  }
-
-  public setTopBar(topBar: TopBar) {
-    this.topBar = topBar;
   }
 
   public addStarterRows(): void {
@@ -147,7 +133,7 @@ export default class BlockManager {
         const newY =
           this.blockMap[x][-1].y - Constants.BLOCK_HEIGHT - Constants.BLOCK_HEIGHT * currentY;
 
-        this.tweenManager.settleBlock(block, newY);
+        this.gameManager.tweenManager.settleBlock(block, newY);
       }
     }
 
@@ -158,7 +144,7 @@ export default class BlockManager {
     const combos = this.scanForCombos();
 
     if (!_.isEmpty(combos)) {
-      this.tweenManager.delayTweens();
+      this.gameManager.tweenManager.delayTweens();
       this.clearFoundCombos(combos);
       this.evaluateBoard();
     }
@@ -171,12 +157,12 @@ export default class BlockManager {
   ) {
     // First block has already been moved since it gets moved in every move, not just swaps.
     this.blockMap[blockPosition.x][blockPosition.y] = secondBlock;
-    this.tweenManager.swapBlocks(firstBlock, secondBlock);
+    this.gameManager.tweenManager.swapBlocks(firstBlock, secondBlock);
   }
 
   private moveSingleBlock(blockPosition: { x; y }, block: Phaser.Sprite, swipeDirection: 1 | -1) {
     this.blockMap[blockPosition.x][blockPosition.y] = undefined;
-    this.tweenManager.moveSingleBlock(block, swipeDirection);
+    this.gameManager.tweenManager.moveSingleBlock(block, swipeDirection);
   }
 
   private scanForCombos() {
@@ -208,13 +194,13 @@ export default class BlockManager {
 
   private clearFoundCombos(locations): void {
     _.each(locations, location => {
-      this.tweenManager.removeBlock(this.blockMap[location.x][location.y]);
+      this.gameManager.tweenManager.removeBlock(this.blockMap[location.x][location.y]);
       this.blockMap[location.x][location.y] = undefined;
 
       this.eliminatedBlocks++;
     });
 
-    this.topBar.updateScore();
+    this.gameManager.topBar.updateScore();
   }
 
   private checkBlockForCombos(x: number, y: number, axisChecked: axis): Array<Object> {
@@ -282,8 +268,14 @@ export default class BlockManager {
       newBlock.alpha = 0.5;
     }
 
-    newBlock.events.onInputDown.add(this.inputManager.startSwipeTracking, this.inputManager);
-    newBlock.events.onInputUp.add(this.inputManager.endSwipeTracking, this.inputManager);
+    newBlock.events.onInputDown.add(
+      this.gameManager.inputManager.startSwipeTracking,
+      this.gameManager.inputManager
+    );
+    newBlock.events.onInputUp.add(
+      this.gameManager.inputManager.endSwipeTracking,
+      this.gameManager.inputManager
+    );
 
     return newBlock;
   }

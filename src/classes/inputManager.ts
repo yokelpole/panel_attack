@@ -1,6 +1,6 @@
 import * as _ from "lodash";
 import Constants from "../utils/constants";
-import BlockManager from "./blockManager";
+import GameManager from "./gameManager";
 
 enum direction {
   horizontal,
@@ -12,13 +12,12 @@ export default class InputManager {
 
   private swipeStartX: number = null;
   private selectedBlock: Phaser.Sprite = null;
-  private blockManager: BlockManager = null;
+  private gameManager: GameManager = null;
   private game: Phaser.Game = null;
 
-  constructor(game: Phaser.Game, blockManager: BlockManager) {
+  constructor(game: Phaser.Game, gameManager: GameManager) {
     this.game = game;
-    this.blockManager = blockManager;
-    this.blockManager.setInputManager(this);
+    this.gameManager = gameManager;
     this.activeSwipeDirection = direction.horizontal;
   }
 
@@ -30,7 +29,7 @@ export default class InputManager {
   public endSwipeTracking(block: Phaser.Sprite, pointer: Phaser.Pointer): void {
     if (Math.abs(pointer.x - this.swipeStartX) > 25) {
       const swipeDirection = pointer.x - this.swipeStartX > 0 ? 1 : -1;
-      this.blockManager.moveBlocks(this.selectedBlock, pointer, swipeDirection);
+      this.gameManager.blockManager.moveBlocks(this.selectedBlock, pointer, swipeDirection);
     }
 
     this.swipeStartX = null;

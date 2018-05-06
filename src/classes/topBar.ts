@@ -1,24 +1,19 @@
-import BlockManager from "./blockManager";
-import InputManager from "./inputManager";
+import GameManager from "./gameManager";
 import Constants from "../utils/constants";
 import { Input } from "phaser-ce";
 
 export default class TopBar {
   private game: Phaser.Game;
-  private blockManager: BlockManager;
-  private inputManager: InputManager;
+  private gameManager: GameManager;
   private scoreText: Phaser.Text;
   private directionText: Phaser.Text;
   private pauseText: Phaser.Text;
   private deathLine: Phaser.Line;
   private lineGraphics: Phaser.Graphics;
 
-  constructor(game: Phaser.Game, blockManager: BlockManager, inputManager: InputManager) {
+  constructor(game: Phaser.Game, gameManager: GameManager) {
     this.game = game;
-    this.blockManager = blockManager;
-    this.inputManager = inputManager;
-
-    this.blockManager.setTopBar(this);
+    this.gameManager = gameManager;
   }
 
   public render() {
@@ -51,15 +46,19 @@ export default class TopBar {
 
   private pauseGame() {
     this.game.paused = !this.game.paused;
-    this.blockManager.blockGroup.ignoreChildInput = !this.blockManager.blockGroup.ignoreChildInput;
+    this.gameManager.blockManager.blockGroup.ignoreChildInput = !this.gameManager.blockManager
+      .blockGroup.ignoreChildInput;
+    this.pauseText.setText(this.game.paused ? "RESUME" : "PAUSE");
   }
 
   private getDirectionString() {
-    return `DIRECTION: ${this.inputManager.activeSwipeDirection ? "VERTICAL" : "HORIZONTAL"}`;
+    return `DIRECTION: ${
+      this.gameManager.inputManager.activeSwipeDirection ? "VERTICAL" : "HORIZONTAL"
+    }`;
   }
 
   private getScoreString() {
-    return `SCORE: ${this.blockManager.eliminatedBlocks.toString()}`;
+    return `SCORE: ${this.gameManager.blockManager.eliminatedBlocks.toString()}`;
   }
 
   private getTextStyle() {
