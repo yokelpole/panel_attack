@@ -2,6 +2,8 @@ import GameManager from "./gameManager";
 import Constants from "../utils/constants";
 import { Input } from "phaser-ce";
 
+const TOP_BAR_LINE_HEIGHT = 60;
+
 export default class TopBar {
   private game: Phaser.Game;
   private gameManager: GameManager;
@@ -28,7 +30,12 @@ export default class TopBar {
     this.pauseText.events.onInputDown.add(this.pauseGame, this);
 
     // TODO: '60' is a REALLY BAD way to tell where the death line is.
-    this.deathLine = new Phaser.Line(0, 60, this.game.world.width, 60);
+    this.deathLine = new Phaser.Line(
+      0,
+      TOP_BAR_LINE_HEIGHT,
+      this.game.world.width,
+      TOP_BAR_LINE_HEIGHT
+    );
     this.lineGraphics = this.game.add.graphics(this.deathLine.start.x, this.deathLine.start.y);
     this.lineGraphics.lineStyle(3, 0xffffff);
     this.lineGraphics.moveTo(this.deathLine.x, this.deathLine.y);
@@ -42,6 +49,22 @@ export default class TopBar {
 
   public updateDirection() {
     this.directionText.setText(this.getDirectionString());
+  }
+
+  public showGameOver() {
+    this.pauseText.visible = false;
+    this.scoreText.visible = false;
+
+    const newGameText = this.game.add.text(0, 0, "START NEW GAME", {
+      font: "bold 48px Arial",
+      fill: "#F00",
+      boundsAlignH: "center",
+      boundsAlignV: "middle"
+    });
+
+    newGameText.setTextBounds(0, 0, this.game.width, TOP_BAR_LINE_HEIGHT * 2);
+    newGameText.inputEnabled = true;
+    newGameText.events.onInputDown.add(() => this.game.state.restart());
   }
 
   private pauseGame() {

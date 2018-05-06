@@ -11,6 +11,8 @@ export default class GameManager {
   public menuManager: MenuManager = undefined;
   public topBar: TopBar = undefined;
 
+  public gameOverEvent: Phaser.Signal = undefined;
+
   private game: Phaser.Game = undefined;
 
   constructor(game: Phaser.Game) {
@@ -21,6 +23,10 @@ export default class GameManager {
     this.inputManager = new InputManager(this.game, this);
     this.menuManager = new MenuManager(this.game, this);
     this.topBar = new TopBar(this.game, this);
+
+    this.gameOverEvent = new Phaser.Signal();
+    this.gameOverEvent.add(() => this.topBar.showGameOver());
+    this.gameOverEvent.add(() => this.menuManager.showGameOver());
 
     this.blockManager.addStarterRows();
     this.tweenManager.startTweenAndTimer();

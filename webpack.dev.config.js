@@ -60,7 +60,7 @@ module.exports = {
         watchOptions: {
             aggregateTimeout: 300,
             poll: true,
-            ignored: /node_modules/
+            ignored: [/node_modules/, /assets/],
         }
     },
     module: {
