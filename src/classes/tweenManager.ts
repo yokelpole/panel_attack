@@ -43,6 +43,7 @@ export default class TweenManager {
     // End game if blocks are too high.
     if (this.gameManager.blockManager.blocksTooHigh()) {
       this.gameManager.gameOverEvent.dispatch();
+      this.addRowTimer.stop();
       return;
     }
 

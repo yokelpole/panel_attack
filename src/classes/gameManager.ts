@@ -25,8 +25,10 @@ export default class GameManager {
     this.topBar = new TopBar(this.game, this);
 
     this.gameOverEvent = new Phaser.Signal();
-    this.gameOverEvent.add(() => this.topBar.showGameOver());
-    this.gameOverEvent.add(() => this.menuManager.showGameOver());
+    this.gameOverEvent.add(() => {
+      this.topBar.showGameOver();
+      this.menuManager.showGameOver();
+    });
 
     this.blockManager.addStarterRows();
     this.tweenManager.startTweenAndTimer();
