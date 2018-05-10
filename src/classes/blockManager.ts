@@ -1,7 +1,7 @@
 import * as Assets from "../assets";
 import * as _ from "lodash";
 import Constants from "../utils/constants";
-import GameManager from "./gameManager";
+import GameManager, { ActiveDirection } from "./gameManager";
 
 enum axis {
   x,
@@ -73,14 +73,22 @@ export default class BlockManager {
     if (_.get(selectedBlock, ["input", "enabled"]) === false) return;
 
     const blockPosition = this.determineBlockPosition(selectedBlock);
+    const currentAxis = this.gameManager.activeDirection === ActiveDirection.HORIZONTAL ? "x" : "y";
+    const destinationAxis = blockPosition[currentAxis] + swipeDirection;
 
-    const switchX = blockPosition.x + swipeDirection;
-    if (switchX < 0 || switchX >= Constants.BOARD_WIDTH) return;
+    if (destinationAxis < 0) return;
+    if (currentAxis === "x" && destinationAxis >= Constants.BOARD_WIDTH) return;
 
-    const secondBlock = this.blockMap[switchX][blockPosition.y];
+    const secondBlock =
+      currentAxis === "x"
+        ? this.blockMap[destinationAxis][blockPosition.y]
+        : this.blockMap[blockPosition.x][destinationAxis];
+
     if (_.get(secondBlock, ["input", "enabled"]) === false) return;
+    if (currentAxis === "y" && !secondBlock) return;
 
-    this.blockMap[switchX][blockPosition.y] = selectedBlock;
+    if (currentAxis === "x") this.blockMap[destinationAxis][blockPosition.y] = selectedBlock;
+    else this.blockMap[blockPosition.x][destinationAxis] = selectedBlock;
 
     if (secondBlock) this.swapBlocks(blockPosition, selectedBlock, secondBlock);
     else this.moveSingleBlock(blockPosition, selectedBlock, swipeDirection);

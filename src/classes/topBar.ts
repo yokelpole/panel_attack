@@ -1,4 +1,4 @@
-import GameManager from "./gameManager";
+import GameManager, { ActiveDirection } from "./gameManager";
 import Constants from "../utils/constants";
 import { Input } from "phaser-ce";
 
@@ -18,18 +18,18 @@ export default class TopBar {
     this.gameManager = gameManager;
   }
 
-  public render() {
+  public render(isSwitchMode: boolean): void {
     this.scoreText = this.game.add.text(0, 0, this.getScoreString(), this.getTextStyle());
     this.scoreText.setTextBounds(0, 0, this.game.width, this.game.height);
 
-    // this.directionText = this.game.add.text(0, 0, this.getDirectionString(), this.getTextStyle());
+    if (isSwitchMode)
+      this.directionText = this.game.add.text(0, 0, this.getDirectionString(), this.getTextStyle());
 
     this.pauseText = this.game.add.text(0, 70, "PAUSE", this.getTextStyle());
     this.pauseText.setTextBounds(0, 0, this.game.width, this.game.height);
     this.pauseText.inputEnabled = true;
     this.pauseText.events.onInputDown.add(this.pauseGame, this);
 
-    // TODO: '60' is a REALLY BAD way to tell where the death line is.
     this.deathLine = new Phaser.Line(
       0,
       TOP_BAR_LINE_HEIGHT,
@@ -43,17 +43,18 @@ export default class TopBar {
     this.lineGraphics.endFill();
   }
 
-  public updateScore() {
+  public updateScore(): void {
     this.scoreText.setText(this.getScoreString());
   }
 
-  public updateDirection() {
+  public updateDirection(direction): void {
     this.directionText.setText(this.getDirectionString());
   }
 
-  public showGameOver() {
+  public showGameOver(): void {
     this.pauseText.visible = false;
     this.scoreText.visible = false;
+    this.directionText.visible = false;
 
     const newGameText = this.game.add.text(0, 0, "START NEW GAME", {
       font: "bold 48px Arial",
@@ -67,24 +68,24 @@ export default class TopBar {
     newGameText.events.onInputDown.add(() => this.game.state.restart());
   }
 
-  private pauseGame() {
+  private pauseGame(): void {
     this.game.paused = !this.game.paused;
     this.gameManager.blockManager.blockGroup.ignoreChildInput = !this.gameManager.blockManager
       .blockGroup.ignoreChildInput;
     this.pauseText.setText(this.game.paused ? "RESUME" : "PAUSE");
   }
 
-  private getDirectionString() {
+  private getDirectionString(): string {
     return `DIRECTION: ${
-      this.gameManager.inputManager.activeSwipeDirection ? "VERTICAL" : "HORIZONTAL"
+      this.gameManager.activeDirection === ActiveDirection.HORIZONTAL ? "HORIZONTAL" : "VERTICAL"
     }`;
   }
 
-  private getScoreString() {
+  private getScoreString(): string {
     return `SCORE: ${this.gameManager.blockManager.eliminatedBlocks.toString()}`;
   }
 
-  private getTextStyle() {
+  private getTextStyle(): object {
     return {
       font: "36px Arial",
       fill: "#FFF",

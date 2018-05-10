@@ -59,7 +59,6 @@ module.exports = {
         inline: true,
         watchOptions: {
             aggregateTimeout: 300,
-            poll: true,
             ignored: [/node_modules/, /assets/],
         }
     },

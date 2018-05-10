@@ -94,7 +94,10 @@ export default class TweenManager {
     this.game.add
       .tween(firstBlock)
       .to(
-        { x: this.gameManager.blockManager.getBlockXRowPosition(secondBlockPosition.x) },
+        {
+          x: this.gameManager.blockManager.getBlockXRowPosition(secondBlockPosition.x),
+          y: secondBlock.y
+        },
         Constants.BLOCK_MOVE_TIME,
         Phaser.Easing.Linear.None,
         true
@@ -103,7 +106,10 @@ export default class TweenManager {
     this.game.add
       .tween(secondBlock)
       .to(
-        { x: this.gameManager.blockManager.getBlockXRowPosition(firstBlockPosition.x) },
+        {
+          x: this.gameManager.blockManager.getBlockXRowPosition(firstBlockPosition.x),
+          y: firstBlock.y
+        },
         Constants.BLOCK_MOVE_TIME,
         Phaser.Easing.Linear.None,
         true
