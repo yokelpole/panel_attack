@@ -22,8 +22,8 @@ export default class TopBar {
     this.scoreText = this.game.add.text(0, 0, this.getScoreString(), this.getTextStyle());
     this.scoreText.setTextBounds(0, 0, this.game.width, this.game.height);
 
-    if (isSwitchMode)
-      this.directionText = this.game.add.text(0, 0, this.getDirectionString(), this.getTextStyle());
+    this.directionText = this.game.add.text(0, 0, this.getDirectionString(), this.getTextStyle());
+    if (!isSwitchMode) this.directionText.visible = false;
 
     this.pauseText = this.game.add.text(0, 70, "PAUSE", this.getTextStyle());
     this.pauseText.setTextBounds(0, 0, this.game.width, this.game.height);
