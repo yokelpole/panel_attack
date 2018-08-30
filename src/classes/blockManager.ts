@@ -39,9 +39,16 @@ export default class BlockManager {
   }
 
   public addStarterRows(): void {
+    // Determine a column to not populate that isn't on the edge.
+    const skipColumn = _.random(1, Constants.BOARD_WIDTH - 2);
+
     for (let x = 0; x < Constants.BOARD_WIDTH; x++) {
+      for (let y = -1; y < 3; y++) {
+        if (y !== -1 && x === skipColumn) continue;
+
       // y starts at -1 as to fill the incoming but inactive row.
-      for (let y = -1; y < 3; y++) this.blockMap[x][y] = this.createNewBlock(x, y);
+        this.blockMap[x][y] = this.createNewBlock(x, y);
+      }
     }
   }
 
@@ -49,6 +56,7 @@ export default class BlockManager {
     for (let x = 0; x < Constants.BOARD_WIDTH; x++) {
       for (let y = Constants.BOARD_HEIGHT; y >= 0; y--) {
         this.blockMap[x][y] = this.blockMap[x][y - 1];
+
         if (y === 0) {
           this.blockMap[x][y].alpha = 1.0;
           this.blockMap[x][y].inputEnabled = true;
