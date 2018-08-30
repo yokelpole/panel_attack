@@ -42,6 +42,7 @@ export default class BlockManager {
     // Determine a column to not populate that isn't on the edge.
     const skipColumn = _.random(1, Constants.BOARD_WIDTH - 2);
 
+    // test
     for (let x = 0; x < Constants.BOARD_WIDTH; x++) {
       for (let y = -1; y < 3; y++) {
         if (y !== -1 && x === skipColumn) continue;
