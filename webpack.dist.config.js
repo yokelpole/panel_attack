@@ -32,10 +32,10 @@ module.exports = {
             'DEBUG': false,
 
             // Do not modify these manually, you may break things...
-            'DEFAULT_GAME_WIDTH': /*[[DEFAULT_GAME_WIDTH*/780/*DEFAULT_GAME_WIDTH]]*/,
-            'DEFAULT_GAME_HEIGHT': /*[[DEFAULT_GAME_HEIGHT*/600/*DEFAULT_GAME_HEIGHT]]*/,
-            'MAX_GAME_WIDTH': /*[[MAX_GAME_WIDTH*/780/*MAX_GAME_WIDTH]]*/,
-            'MAX_GAME_HEIGHT': /*[[MAX_GAME_HEIGHT*/600/*MAX_GAME_HEIGHT]]*/,
+            'DEFAULT_GAME_WIDTH': /*[[DEFAULT_GAME_WIDTH*/720/*DEFAULT_GAME_WIDTH]]*/,
+            'DEFAULT_GAME_HEIGHT': /*[[DEFAULT_GAME_HEIGHT*/1280/*DEFAULT_GAME_HEIGHT]]*/,
+            'MAX_GAME_WIDTH': /*[[MAX_GAME_WIDTH*/720/*MAX_GAME_WIDTH]]*/,
+            'MAX_GAME_HEIGHT': /*[[MAX_GAME_HEIGHT*/1280/*MAX_GAME_HEIGHT]]*/,
             'SCALE_MODE': JSON.stringify(/*[[SCALE_MODE*/'SHOW_ALL'/*SCALE_MODE]]*/),
 
             // The items below most likely the ones you should be modifying

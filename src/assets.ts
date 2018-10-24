@@ -10,6 +10,7 @@ export namespace Images {
         static getName(): string { return 'black'; }
 
         static getPNG(): string { return require('assets/images/black.png'); }
+        static getXCF(): string { return require('assets/images/black.xcf'); }
     }
     export class ImagesBlue {
         static getName(): string { return 'blue'; }

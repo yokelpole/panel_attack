@@ -5,7 +5,6 @@ export default class MenuManager {
   private game: Phaser.Game = undefined;
   private gameManager: GameManager = undefined;
   private regularGameText: Phaser.Text = undefined;
-  private switchModeText: Phaser.Text = undefined;
 
   constructor(game: Phaser.Game, gameManager: GameManager) {
     this.game = game;
@@ -17,16 +16,10 @@ export default class MenuManager {
     this.regularGameText.setTextBounds(0, 0, this.game.width, this.game.height / 2);
     this.regularGameText.inputEnabled = true;
     this.regularGameText.events.onInputDown.add(() => this.gameManager.startNewGame());
-
-    this.switchModeText = this.game.add.text(0, 0, "SWITCH GAME", this.getTextStyle());
-    this.switchModeText.setTextBounds(0, this.game.height / 2, this.game.width, this.game.height / 2);
-    this.switchModeText.inputEnabled = true;
-    this.switchModeText.events.onInputDown.add(() => this.gameManager.startNewGame(true));
   }
 
   public hideTitleScreen(): void {
     this.regularGameText.destroy();
-    this.switchModeText.destroy();
   }
 
   public showGameOver(): void {
@@ -34,17 +27,18 @@ export default class MenuManager {
 
     const gameOverText = this.game.add.text(
       0,
-      0,
-      `GAME OVER\n SCORE: ${score}`,
+      60,
+      `GAME OVER\nSCORE: ${score}`,
       this.getTextStyle()
     );
-    gameOverText.setShadow(3, 3, "rgba(0,0,0,0.5)", 2);
+
+    gameOverText.setShadow(10, 10, "rgba(0,0,0,0.5)", 2);
     gameOverText.setTextBounds(0, 0, this.game.width, this.game.height);
   }
 
   private getTextStyle() {
     return {
-      font: "bold 48px Arial",
+      font: "bold 80px Arial",
       fill: "#FFF",
       boundsAlignH: "center",
       boundsAlignV: "middle"

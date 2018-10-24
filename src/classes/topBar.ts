@@ -1,14 +1,11 @@
-import GameManager, { ActiveDirection } from "./gameManager";
-import Constants from "../utils/constants";
-import { Input } from "phaser-ce";
+import GameManager from "./gameManager";
 
-const TOP_BAR_LINE_HEIGHT = 60;
+const TOP_BAR_LINE_HEIGHT = 100;
 
 export default class TopBar {
   private game: Phaser.Game;
   private gameManager: GameManager;
   private scoreText: Phaser.Text;
-  private directionText: Phaser.Text;
   private pauseText: Phaser.Text;
   private deathLine: Phaser.Line;
   private lineGraphics: Phaser.Graphics;
@@ -18,14 +15,10 @@ export default class TopBar {
     this.gameManager = gameManager;
   }
 
-  public render(isSwitchMode: boolean): void {
-    this.scoreText = this.game.add.text(0, 0, this.getScoreString(), this.getTextStyle());
-    this.scoreText.setTextBounds(0, 0, this.game.width, this.game.height);
+  public render(): void {
+    this.scoreText = this.game.add.text(10, 30, this.getScoreString(), this.getTextStyle());
 
-    this.directionText = this.game.add.text(0, 0, this.getDirectionString(), this.getTextStyle());
-    if (!isSwitchMode) this.directionText.visible = false;
-
-    this.pauseText = this.game.add.text(0, 70, "PAUSE", this.getTextStyle());
+    this.pauseText = this.game.add.text(0, 60, "PAUSE", this.getTextStyle());
     this.pauseText.setTextBounds(0, 0, this.game.width, this.game.height);
     this.pauseText.inputEnabled = true;
     this.pauseText.events.onInputDown.add(this.pauseGame, this);
@@ -47,17 +40,12 @@ export default class TopBar {
     this.scoreText.setText(this.getScoreString());
   }
 
-  public updateDirection(direction): void {
-    this.directionText.setText(this.getDirectionString());
-  }
-
   public showGameOver(): void {
     this.pauseText.visible = false;
     this.scoreText.visible = false;
-    this.directionText.visible = false;
 
     const newGameText = this.game.add.text(0, 0, "START NEW GAME", {
-      font: "bold 48px Arial",
+      font: "bold 72px Arial",
       fill: "#F00",
       boundsAlignH: "center",
       boundsAlignV: "middle"
@@ -75,19 +63,13 @@ export default class TopBar {
     this.pauseText.setText(this.game.paused ? "RESUME" : "PAUSE");
   }
 
-  private getDirectionString(): string {
-    return `DIRECTION: ${
-      this.gameManager.activeDirection === ActiveDirection.HORIZONTAL ? "HORIZONTAL" : "VERTICAL"
-    }`;
-  }
-
   private getScoreString(): string {
-    return `SCORE: ${this.gameManager.blockManager.eliminatedBlocks.toString()}`;
+    return `SCORE\n${this.gameManager.blockManager.eliminatedBlocks.toString()}`;
   }
 
   private getTextStyle(): object {
     return {
-      font: "36px Arial",
+      font: "64px Arial",
       fill: "#FFF",
       boundsAlignH: "right",
       boundsAlignV: "top"

@@ -1,6 +1,5 @@
 import * as _ from "lodash";
-import Constants from "../utils/constants";
-import GameManager, { ActiveDirection } from "./gameManager";
+import GameManager from "./gameManager";
 
 interface ClickPosition {
   x: number;
@@ -24,18 +23,9 @@ export default class InputManager {
   }
 
   public endSwipeTracking(block: Phaser.Sprite, pointer: Phaser.Pointer): void {
-    const swipeEnd: ClickPosition = { x: pointer.x, y: pointer.y };
-    const currentAxis = this.gameManager.activeDirection === ActiveDirection.HORIZONTAL ? "x" : "y";
-
-    if (Math.abs(pointer[currentAxis] - this.swipeStart[currentAxis]) > 25) {
+    if (Math.abs(pointer.x - this.swipeStart.x) > 25) {
       // TODO: Fix this greasiness.
-      let swipeDirection;
-      if (currentAxis === "x") {
-        swipeDirection = pointer[currentAxis] - this.swipeStart[currentAxis] > 0 ? 1 : -1;
-      } else {
-        swipeDirection = pointer[currentAxis] - this.swipeStart[currentAxis] > 0 ? -1 : 1;
-      }
-
+      const swipeDirection = pointer.x - this.swipeStart.x > 0 ? 1 : -1;
       this.gameManager.blockManager.moveBlocks(this.selectedBlock, pointer, swipeDirection);
     }
 
