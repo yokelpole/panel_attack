@@ -11,6 +11,11 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/blue.png'); }
     }
+    export class ImagesGray {
+        static getName(): string { return 'gray'; }
+
+        static getPNG(): string { return require('assets/images/gray.png'); }
+    }
     export class ImagesGreen {
         static getName(): string { return 'green'; }
 
@@ -31,10 +36,10 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/red.png'); }
     }
-    export class ImagesYellow {
-        static getName(): string { return 'yellow'; }
+    export class ImagesWhite {
+        static getName(): string { return 'white'; }
 
-        static getPNG(): string { return require('assets/images/yellow.png'); }
+        static getPNG(): string { return require('assets/images/white.png'); }
     }
 }
 
@@ -136,9 +141,5 @@ export namespace Shaders {
     }
 }
 export namespace Misc {
-    export class ImagesHappyxcf {
-        static getName(): string { return 'happyxcf'; }
-
-        static getFile(): string { return require('assets/images/happyxcf.xcf'); }
-    }
+    class IExistSoTypeScriptWillNotComplainAboutAnEmptyNamespace {}
 }

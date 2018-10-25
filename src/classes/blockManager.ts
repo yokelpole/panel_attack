@@ -23,7 +23,7 @@ export default class BlockManager {
     Assets.Images.ImagesPurple,
     Assets.Images.ImagesRed,
     Assets.Images.ImagesOrange,
-    Assets.Images.ImagesYellow
+    Assets.Images.ImagesGray,
   ];
 
   constructor(game: Phaser.Game, gameManager: GameManager) {
