@@ -19,7 +19,7 @@ export default class TopBar {
     this.scoreText = this.game.add.text(10, 30, this.getScoreString(), this.getTextStyle());
 
     this.pauseText = this.game.add.text(0, 60, "PAUSE", this.getTextStyle());
-    this.pauseText.setTextBounds(0, 0, this.game.width, this.game.height);
+    this.pauseText.setTextBounds(0, 0, this.game.width - 15, this.game.height);
     this.pauseText.inputEnabled = true;
     this.pauseText.events.onInputDown.add(this.pauseGame, this);
 

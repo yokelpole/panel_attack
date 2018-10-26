@@ -23,7 +23,7 @@ export default class BlockManager {
     Assets.Images.ImagesPurple,
     Assets.Images.ImagesRed,
     Assets.Images.ImagesOrange,
-    Assets.Images.ImagesGray,
+    Assets.Images.ImagesGray
   ];
 
   constructor(game: Phaser.Game, gameManager: GameManager) {
@@ -31,11 +31,15 @@ export default class BlockManager {
     this.gameManager = gameManager;
 
     this.blockGroup = this.game.add.group();
-
-    this.blockMap = [];
-    for (let x = 0; x < Constants.BOARD_HEIGHT; x++) this.blockMap[x] = [];
+    this.blockMap = this.generateBlockMap();
 
     this.eliminatedBlocks = 0;
+  }
+
+  private generateBlockMap(): Phaser.Sprite[][] {
+    const blockMap = [];
+    for (let x = 0; x < Constants.BOARD_HEIGHT; x++) blockMap[x] = [];
+    return blockMap;
   }
 
   public addStarterRows(): void {
@@ -46,10 +50,36 @@ export default class BlockManager {
       for (let y = -1; y < 3; y++) {
         if (y !== -1 && x === skipColumn) continue;
 
-      // y starts at -1 as to fill the incoming but inactive row.
+        // y starts at -1 as to fill the incoming but inactive row.
         this.blockMap[x][y] = this.createNewBlock(x, y);
       }
     }
+  }
+
+  public addStarterRowsForStartScreen(): void {
+    for (let x = 0; x < Constants.BOARD_WIDTH; x++) {
+      for (let y = -1; y < 11; y++) {
+        // y starts at -1 as to fill the incoming but inactive row.
+        this.blockMap[x][y] = this.createNewBlock(x, y);
+      }
+    }
+  }
+
+  public cleanupTopmostRow(): void {
+    _.each(this.blockMap, x => _.last(x, y => y.destroy()));
+  }
+
+  public cleanupAllBlocks(): void {
+    _.each(this.blockMap, x => _.each(x, (block: Phaser.Sprite) => block.destroy()));
+    this.blockGroup.removeAll();
+    this.blockMap = this.generateBlockMap();
+  }
+
+  public disableInputAndRemoveCustomOpacityForAllBlocks(): void {
+    this.blockGroup.forEach((block: Phaser.Sprite) => {
+      block.inputEnabled = false;
+      block.alpha = 1;
+    }, this);
   }
 
   public addNewRow(): void {
@@ -81,14 +111,14 @@ export default class BlockManager {
     if (_.get(selectedBlock, ["input", "enabled"]) === false) return;
 
     const blockPosition = this.determineBlockPosition(selectedBlock);
-    const destinationAxis = blockPosition['x'] + swipeDirection;
+    const destinationAxis = blockPosition["x"] + swipeDirection;
 
     if (destinationAxis < 0) return;
     if (destinationAxis >= Constants.BOARD_WIDTH) return;
 
     const secondBlock = this.blockMap[destinationAxis][blockPosition.y];
     if (_.get(secondBlock, ["input", "enabled"]) === false) return;
-    
+
     this.blockMap[destinationAxis][blockPosition.y] = selectedBlock;
 
     if (secondBlock) this.swapBlocks(blockPosition, selectedBlock, secondBlock);
@@ -216,7 +246,6 @@ export default class BlockManager {
     const currentBlock = this.blockMap[x][y];
     if (!currentBlock) return;
 
-    const combo = [];
     const comboCoordinates = [{ x, y }];
 
     let checkedLocation = axisChecked === axis.x ? x + 1 : y + 1;

@@ -35,6 +35,7 @@ export default class GameManager {
   }
 
   public startNewGame() {
+    this.blockManager.cleanupAllBlocks();
     this.blockManager.addStarterRows();
     this.tweenManager.startTweenAndTimer();
     this.menuManager.hideTitleScreen();

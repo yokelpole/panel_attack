@@ -13,9 +13,9 @@ export default class TweenManager {
     this.gameManager = gameManager;
   }
 
-  public startTweenAndTimer() {
+  public startTweenAndTimer(isStartScreen: boolean = false) : void{
     this.addRowTimer = this.game.time.create(false);
-    this.addRowTimer.loop(Constants.ROW_MOVE_TIME, () => this.addRow());
+    this.addRowTimer.loop(Constants.ROW_MOVE_TIME, () => this.addRow(isStartScreen));
     this.addRowTimer.start();
 
     this.upwardsTween = this.tweenUpwardsOneRow();
@@ -39,9 +39,9 @@ export default class TweenManager {
     this.haltTimer.start();
   }
 
-  public addRow(): void {
+  public addRow(isStartScreen: boolean): void {
     // End game if blocks are too high.
-    if (this.gameManager.blockManager.blocksTooHigh()) {
+    if (!isStartScreen && this.gameManager.blockManager.blocksTooHigh()) {
       this.gameManager.gameOverEvent.dispatch();
       this.addRowTimer.stop();
       return;
@@ -50,6 +50,12 @@ export default class TweenManager {
     this.upwardsTween = this.tweenUpwardsOneRow();
     this.gameManager.blockManager.addNewRow();
     this.gameManager.blockManager.evaluateBoard();
+
+    if (isStartScreen) { 
+      this.gameManager.blockManager.cleanupTopmostRow();
+      // A bit hacky to do this on each row added, but oh well.
+      this.gameManager.blockManager.disableInputAndRemoveCustomOpacityForAllBlocks();
+    }
   }
 
   public settleBlock(block: Phaser.Sprite, yPosition: number): void {
