@@ -16,6 +16,9 @@ export default class MenuManager {
     this.regularGameText.setTextBounds(0, 0, this.game.width, this.game.height / 2);
     this.regularGameText.inputEnabled = true;
     this.regularGameText.events.onInputDown.add(() => this.gameManager.startNewGame());
+
+    this.gameManager.blockManager.addStarterRows();
+    this.gameManager.tweenManager.startTweenAndTimer();
   }
 
   public hideTitleScreen(): void {
