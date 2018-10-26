@@ -3,8 +3,8 @@
 ## About
 Panel attack is a clone of [Tetris Attack/Panel De Pon](https://en.wikipedia.org/wiki/Tetris_Attack) written in JavaScript using PhaserJS.
 
-![title screen](readme_assets/title_screen.jpg){:height="50%" width="50%"}
-![game screen](readme_assets/game_screen.jpg){:height="50%" width="50%"}
+![title screen](readme_assets/title_screen.jpg)
+![game screen](readme_assets/game_screen.jpg)
 
 * Blocks move up from the bottom of the screen and you have to try to clear them by making colour-matching combinations of 3 or greater.
 *  Matches can be vertical or horizontal.
